@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyProject Online — Design & Verify Timber Connections | Rothoblaas</title>
+  <meta name="description" content="Design and verify metallic connections for timber structures in your browser. Generate calculation notes, explore modules for screws, plates, hold-downs, and concrete fixings—powered by Rothoblaas." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --rb-black:#0c0c0c; --rb-gray:#6b7280; --rb-bg:#0f1115; --rb-card:#131722; --rb-accent:#00c37a; --rb-muted:#cbd5e1; --rb-ring:#00e39a;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0f1115 0%, #0b0d12 100%);color:#e5e7eb;}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 18px;border-radius:14px;border:1px solid #1f2937;background:#111827;color:#fff;font-weight:600;box-shadow:0 0 0 0 rgba(0,195,122,0);transition:box-shadow .2s, transform .07s, background .2s}
+    .btn.primary{background:linear-gradient(90deg,var(--rb-accent),#11d69a);border-color:transparent;color:#04110c}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px -10px rgba(0,0,0,.6), 0 0 0 2px rgba(0,195,122,.15)}
+    header{position:sticky;top:0;z-index:40;background:rgba(15,17,21,.6);backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo{height:36px;max-width:320px;display:block}
+    @media (max-width:640px){.brand .logo{height:28px;max-width:240px}}
+    .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--rb-accent);box-shadow:0 0 0 4px rgba(0,227,154,.25)}
+    .navlinks{display:flex;gap:18px;align-items:center;color:var(--rb-muted)}
+    .hero{padding:80px 0;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:#0b1320;border:1px solid rgba(255,255,255,.08);color:#8ab4ff;font-weight:600;font-size:12px}
+    .hero h1{font-size:clamp(32px,6vw,56px);line-height:1.05;margin:16px 0 10px}
+    .lead{font-size:clamp(16px,2.2vw,20px);color:var(--rb-muted)}
+    .hero-card{background:radial-gradient(80% 120% at 10% 10%, rgba(0,195,122,.12), transparent 60%), linear-gradient(180deg,#0e1422,#0b0f19);border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:20px;box-shadow:inset 0 0 0 1px rgba(0,195,122,.08), 0 20px 40px -28px rgba(0,0,0,.7)}
+    .mock{height:380px;border-radius:14px;background:linear-gradient(180deg,#121827,#0e1523);border:1px solid rgba(255,255,255,.08);display:grid;grid-template-rows:42px 1fr}
+    .mock .toolbar{display:flex;gap:10px;align-items:center;padding:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .doty{width:10px;height:10px;border-radius:12px;background:#ef4444}
+    .doty:nth-child(2){background:#f59e0b}
+    .doty:nth-child(3){background:#22c55e}
+    .canvas{display:grid;grid-template-columns:280px 1fr}
+    .panel{border-right:1px solid rgba(255,255,255,.06);padding:16px}
+    .panel h4{margin:8px 0 14px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px}
+    .list{display:grid;gap:10px}
+    .list .item{padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:#0a1220}
+    .stage{padding:16px;display:grid;gap:14px}
+    .stage .grid{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+    .chip{padding:8px 10px;border-radius:999px;border:1px dashed rgba(255,255,255,.14);color:#93c5fd;font-size:12px}
+    .trust{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px;color:#9ca3af}
+    .section{padding:70px 0;border-top:1px solid rgba(255,255,255,.06)}
+    .cards{display:grid;gap:18px;grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--rb-card);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:22px;box-shadow:0 10px 30px -20px rgba(0,0,0,.6)}
+    .card h3{margin:6px 0 8px}
+    .meta{color:var(--rb-gray);font-size:14px}
+    .feature-list{display:grid;gap:10px;margin-top:8px}
+    .feature-list li{list-style:none;display:flex;gap:10px;align-items:flex-start}
+    .feature-list .tick{margin-top:4px;width:16px;height:16px;border:2px solid var(--rb-ring);border-radius:4px}
+    .glow{position:relative}
+    .glow::after{content:"";position:absolute;inset:-2px;border-radius:22px;padding:1px;background:linear-gradient(45deg,rgba(0,195,122,.4),rgba(17,214,154,.1),transparent,transparent);-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);-webkit-mask-composite: xor; mask-composite: exclude;}
+    .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .faq{display:grid;gap:12px}
+    details{background:#0c1220;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px}
+    summary{cursor:pointer;font-weight:600}
+    footer{padding:60px 0;color:#94a3b8}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:20px}
+    .input{display:flex;gap:8px}
+    input[type=email]{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0a0f19;color:#e5e7eb}
+    @media (max-width:980px){.hero{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.stage .grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr}.canvas{grid-template-columns:1fr}}
+  .tile{transition:transform .08s ease, box-shadow .2s ease}
+    .tile:hover{transform:translateY(-2px);box-shadow:0 18px 40px -22px rgba(0,0,0,.7)}
+    .tiles{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:1100px){.tiles{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.tiles{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand" aria-label="Rothoblaas home">
+        <img src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg" alt="Rothoblaas — Solutions for Building Technology" class="logo"/>
+      </a>
+      
+    </div>
+  </header>
+
+  <main>
+    <!-- CALCULATOR TILES ONLY -->
+    <section id="tiles" class="section" style="border-top:none;padding-top:40px">
+      <div class="container">
+        <h1 style="margin:0 0 8px">Choose a calculator</h1>
+        <p class="meta" style="margin:0 0 24px">Select a module to start a calculation.</p>
+        <div class="cards tiles">
+          <a class="card tile" href="#screws"><h3>Screws & dowels</h3><p class="meta">Shear, withdrawal, spacing & edge checks.</p></a>
+          <a class="card tile" href="#plates"><h3>Plates & angles</h3><p class="meta">Brackets & perforated plates.</p></a>
+          <a class="card tile" href="#holddowns"><h3>Hold‑downs & anchors</h3><p class="meta">Uplift & shear for walls.</p></a>
+          <a class="card tile" href="#timbersteel"><h3>Timber–steel</h3><p class="meta">Hybrid interfaces & retrofits.</p></a>
+          <a class="card tile" href="#timberconcrete"><h3>Timber–concrete</h3><p class="meta">Interface checks & anchors.</p></a>
+          <a class="card tile" href="#shearwalls"><h3>Shear walls & diaphragms</h3><p class="meta">Lateral elements with connectors.</p></a>
+          <a class="card tile" href="#calcnotes"><h3>Calculation notes</h3><p class="meta">One‑click PDF outputs.</p></a>
+          <a class="card tile" href="#catalog"><h3>Catalog & docs</h3><p class="meta">Technical data built‑in.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  
+</body>
+</html>
