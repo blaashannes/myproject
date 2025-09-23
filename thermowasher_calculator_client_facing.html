@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>THERMOWASHER Quantity & HBS Length Calculator</title>
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--muted:#1f2937;--accent:#e5e7eb;--text:#f8fafc;--sub:#cbd5e1;--brand:#22c55e}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a 30%,#0b1220);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text)}
+    .wrap{max-width:1100px;margin:32px auto;padding:20px}
+    .title{font-weight:800;font-size:28px;letter-spacing:.3px;margin:0 0 8px}
+    .subtitle{color:var(--sub);margin:0 0 24px;font-size:14px}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:1.2fr 1fr}}
+    .card{background:rgba(17,24,39,.6);backdrop-filter:blur(8px);border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:18px}
+    .card h2{margin:0 0 12px;font-size:16px;letter-spacing:.2px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    label{display:block;font-size:12px;color:var(--sub);margin:6px 0}
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #374151;background:#0b1220;color:var(--text)}
+    input[type="number"]{appearance:textfield}
+    .hint{font-size:11px;color:#9ca3af}
+    .pill{display:inline-flex;gap:8px;align-items:center;background:#0b1220;border:1px solid #334155;border-radius:9999px;padding:6px 10px;font-size:12px}
+    .cta{display:inline-block;margin-top:8px;background:var(--brand);color:#052e12;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .out{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0b1220;border:1px dashed #334155;border-radius:14px;padding:14px}
+    .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media(min-width:640px){.kpi{grid-template-columns:repeat(4,1fr)}}
+    .kpi .box{background:#0b1220;border:1px solid #334155;border-radius:16px;padding:14px}
+    .kpi .box b{display:block;font-size:20px;margin-bottom:4px}
+    .footer{margin-top:14px;color:#9ca3af;font-size:12px}
+    .muted{color:#a1a1aa}
+    .inline{display:flex;gap:10px;flex-wrap:wrap}
+    .header{display:flex;align-items:center;gap:12px}
+    .brandlogo{height:36px; width:auto; display:block; filter:brightness(0) invert(1);} /* force white */
+    .topbar{position:relative;width:100%;background:#0b1220;border-bottom:1px solid rgba(148,163,184,.18);padding:14px 20px;display:flex;align-items:center}
+    .brandlogo--top{height:36px}
+    .homeLink{display:inline-flex;align-items:center;text-decoration:none}
+    .backlink{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #334155;border-radius:9999px;text-decoration:none;color:#f8fafc;background:#0b1220}
+    .backlink:hover{background:#111827}
+    /* image layout */
+    .imggrid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+    @media(min-width:900px){.imggrid{grid-template-columns:1fr 1fr}}
+    .fig{background:#0b1220;border:1px solid #334155;border-radius:14px;padding:8px;display:flex;flex-direction:column;align-items:center}
+    .imgfit{width:100%;max-height:280px;object-fit:contain;display:block}
+    .figcap{margin-top:6px;font-size:11px;color:#9ca3af}
+  </style>
+  <style>
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #334155;padding:10px;text-align:left}
+    th{background:#0b1220}
+    .right{text-align:right}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="homeLink" href="https://blaashannes.github.io/myproject/" title="Go to homepage">
+      <img class="brandlogo brandlogo--top" src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg" alt="Rothoblaas logo" />
+    </a>
+    <a class="backlink" href="https://blaashannes.github.io/myproject/" aria-label="Back to start page">← Back to start</a>
+  </div>
+  <div class="wrap">
+    <div class="title">THERMOWASHER Quantity & HBS Length Calculator</div>
+    <p class="subtitle">Quickly estimate washers, screws, and suggested HBS/TBS length for continuous exterior insulation. Assumes THERMO65 washers and a minimum <b>1.5 in</b> embedment into studs. All nominations shown in inches.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1) How do you want to estimate quantity?</h2>
+        <div class="inline">
+          <label class="pill"><input type="radio" name="mode" value="area" checked> &nbsp;By wall area (ft²)</label>
+          <label class="pill"><input type="radio" name="mode" value="boards"> &nbsp;By board count</label>
+        </div>
+
+        <div id="areaMode">
+          <div class="row">
+            <div>
+              <label>Total wall area (ft²)</label>
+              <input id="wallArea" type="number" min="0" step="1" placeholder="e.g. 1500" value="1000" />
+            </div>
+            <div>
+              <label>Reference panel size</label>
+              <select id="panelSize">
+                <option value="32">4×8 ft (32 ft²)</option>
+                <option value="16">2×8 ft (16 ft²)</option>
+                <option value="12">2×6 ft (12 ft²)</option>
+                <option value="8">2×4 ft (8 ft²)</option>
+              </select>
+              <div class="hint">Used only to translate fasteners-per-panel into fasteners-per-area.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="boardMode" style="display:none">
+          <div class="row">
+            <div>
+              <label>Number of insulation boards</label>
+              <input id="boardCount" type="number" min="0" step="1" placeholder="e.g. 120" value="100" />
+            </div>
+            <div>
+              <label>Board size</label>
+              <select id="boardSize">
+                <option value="32">4×8 ft</option>
+                <option value="16">2×8 ft</option>
+                <option value="12">2×6 ft</option>
+                <option value="8">2×4 ft</option>
+                <option value="1">Custom (ignored for count mode)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <h2>2) Insulation + fastening inputs</h2>
+        <div class="row3">
+          <div>
+            <label>Continuous insulation thickness (in)</label>
+            <input id="ci" type="number" min="0" step="0.125" value="2.0" />
+          </div>
+          <div>
+            <label>Sheathing thickness (in)</label>
+            <input id="sheathing" type="number" min="0" step="0.0625" value="0.5" />
+          </div>
+          <div>
+            <label>Embedment into stud (in)</label>
+            <input id="embed" type="number" min="1.5" step="0.125" value="1.5" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Insulation type (sets typical density)</label>
+            <select id="insType">
+              <option value='{"name":"EPS (Type I–II)","density_pcf":1.25,"source":"eps"}'>EPS (Type I–II) ~1.0–1.5 pcf</option>
+              <option value='{"name":"XPS (250)","density_pcf":1.6,"source":"xps"}'>XPS (250) ~1.6 pcf</option>
+              <option value='{"name":"Polyiso (PIR)","density_pcf":2.0,"source":"pir"}'>Polyiso (PIR) ~2.0–3.0 pcf</option>
+              <option value='{"name":"Mineral wool (Comfortboard 80)","density_pcf":8.0,"source":"mw"}'>Mineral wool (Comfortboard 80) ~8 pcf</option>
+              <option value='{"name":"Wood fiber (STEICO isorel)","density_pcf":14.3,"source":"wf"}'>Wood fiber (STEICO isorel) ~14 pcf</option>
+            </select>
+            <div class="hint">We use typical densities to suggest washer vs screw-only. Adjust below if you know the exact product.</div>
+          </div>
+          <div>
+            <label>Assumed density (pcf)</label>
+            <input id="density" type="number" min="0.5" step="0.1" value="1.25" />
+          </div>
+        </div>
+        <div class="inline" style="margin:6px 0 8px">
+          <label class="pill"><input type="radio" name="diam" value="0.24" checked> &nbsp;HBS diameter 0.24 in (Ø6)</label>
+          <label class="pill"><input type="radio" name="diam" value="0.32"> &nbsp;HBS/TBS diameter 0.32 in (Ø8)</label>
+          <span class="hint">Both diameters are compatible with THERMO65. Order by pieces. CI ≥ 5 in → 0.32 in; CI < 5 in → 0.24 in.</span>
+        </div>
+        <div class="row">
+          <div>
+            <label>Fasteners per 4×8 panel</label>
+            <input id="fpb" type="number" min="1" step="1" value="5" />
+            <div class="hint">Typical 5–6; increase in corners/high-wind exposures.</div>
+          </div>
+          <div>
+            <label>Contingency / waste (%)</label>
+            <input id="waste" type="number" min="0" step="1" value="5" />
+          </div>
+        </div>
+        <button class="cta" id="calcBtn">Calculate</button>
+      </div>
+
+      <div class="card">
+        <h2>Results</h2>
+        <div class="kpi">
+          <div class="box"><b id="washers">0</b><span class="muted">Washers needed</span></div>
+          <div class="box"><b id="screws">0</b><span class="muted">HBS screws needed</span></div>
+          <div class="box"><b id="boxes">0</b><span class="muted">Ref. boxes (THERMO65)</span></div>
+          <div class="box"><b id="hbs">—</b><span class="muted">Suggested fastener</span></div>
+        </div>
+        <div class="out" id="explain"></div>
+        <div class="footer">Assumes THERMO65 washer (Ø2-9/16 in). Adjust fasteners per panel for wind/seismic design as required by local code/engineer.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Images</h2>
+      <div class="imggrid">
+        <figure class="fig">
+          <img class="imgfit" src="https://www.rothoblaas.com/images/thermowasher-app-2-1558076850.jpg?w=1080&h=1080" alt="THERMOWASHER application photo" />
+          <figcaption class="figcap">Application photo.<\/figcaption>
+        </figure>
+        <figure class="fig">
+          <img class="imgfit" src="https://www.rothoblaas.com/images/THERMOWASHER-1750318121.png?w=1080&h=1080" referrerpolicy="no-referrer" alt="THERMOWASHER product image" />
+          <figcaption class="figcap">THERMOWASHER product image.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Suggested Order Table (all specs shown in inches)</h2>
+      <div class="hint">Automatically builds from your inputs. Order is placed by <b>pieces</b>. Box counts are shown only for reference (THERMO65: 700 pcs/box from datasheet).</div>
+      <table id="orderTable">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Code</th>
+            <th>Spec (in)</th>
+            <th class="right">Qty (pcs)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" class="muted">Run a calculation to populate…</td></tr>
+        </tbody>
+      </table>
+      <button class="cta" id="exportCsv" style="margin-top:10px">Export CSV</button>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Notes</h2>
+      <ul>
+        <li>Quantity is the same for washers and screws for insulation hold. Furring attachment requires a separate fastener schedule.</li>
+        <li>Suggested screw family by density: <b>low/medium density</b> (e.g., EPS/XPS/PIR) → THERMO washers + <b>HBS</b>; <b>high density</b> (e.g., mineral wool, dense wood fiber) → <b>TBS Ø0.32 in</b> (no washer). CI > 5 in → Ø0.32 in recommended.</li>
+        <li>Suggested HBS/TBS length is calculated as: <code>sheathing + CI + embedment</code>, then rounded up to the next common length in millimeters.</li>      </ul>
+    </div>
+  </div>
+
+  <script>
+    // --- UI toggles ---
+    const modeEls = document.querySelectorAll('input[name="mode"]');
+    const areaMode = document.getElementById('areaMode');
+    const boardMode = document.getElementById('boardMode');
+
+    modeEls.forEach(r=>r.addEventListener('change',()=>{
+      const v = document.querySelector('input[name="mode"]:checked').value;
+      areaMode.style.display = v==='area'? 'block':'none';
+      boardMode.style.display = v==='boards'? 'block':'none';
+    }));
+
+    // --- helpers ---
+    function toFixed(n){return Number.parseFloat(n).toLocaleString(undefined,{maximumFractionDigits:0})}
+
+    function roundUpTo(list, mm){
+      for(const L of list){ if(mm <= L) return L; }
+      return list[list.length-1];
+    }
+
+    // FIX: ensure this function ends with a single closing brace only
+    function suggestHBS(ci, sheathing, embed){
+      const totalIn = (Number(ci)||0) + (Number(sheathing)||0) + (Number(embed)||0);
+      const mm = totalIn * 25.4;
+      const common = [80,100,120,140,160,180,200,220,240];
+      const pick = roundUpTo(common, Math.ceil(mm));
+      return { inches: totalIn, mm: pick };
+    }
+
+    function gcd(a,b){return b?gcd(b,a%b):a}
+    function toEighths(inches){
+      const up = Math.ceil(inches*8); // numerator in eighths, rounded up
+      const whole = Math.floor(up/8);
+      const num = up - whole*8;
+      if(num===0) return whole + '\"';
+      const d = gcd(num,8);
+      const n = num/d, den = 8/d;
+      return `${whole} ${n}/${den}\"`;
+    }
+
+    function computeFasteners(mode, area, panel, boards, fpb, waste){
+      let fasteners = 0;
+      if(mode==='area'){
+        const panels = area / panel;
+        fasteners = Math.ceil(panels * fpb);
+      } else {
+        fasteners = Math.ceil(boards * fpb);
+      }
+      if(waste>0){ fasteners = Math.ceil(fasteners * (1 + waste/100)); }
+      return fasteners;
+    }
+
+    function buildOrderTable(fasteners, boxes, rec, codeDia=6, diamIn=0.24, strategy){
+      const tbody = document.querySelector('#orderTable tbody');
+      tbody.innerHTML = '';
+
+      // Conditionally include washer row
+      if(strategy.needsWasher){
+        const tr1 = document.createElement('tr');
+        tr1.innerHTML = `<td>THERMOWASHER</td><td>THERMO65</td><td>Ø2-9/16\\\" head</td><td class=\\\"right\\\">${toFixed(fasteners)}</td><td>700 pcs/box (ref only)</td>`;
+        tbody.appendChild(tr1);
+      }
+
+      // Fastener row (HBS or TBS)
+      const lenIn = (rec && typeof rec.inches==='number') ? rec.inches : 0; // defensive
+      const lenInFmt = toEighths(lenIn);
+      const codePrefix = strategy.useTBS ? 'TBS' : 'HBS';
+      const tr2 = document.createElement('tr');
+      tr2.innerHTML = `<td>${codePrefix} Screw ${diamIn.toFixed(2)} in (Ø${codeDia})</td><td>${codePrefix}${codeDia}${rec ? rec.mm : ''}</td><td>Nominal length ${lenInFmt} (order code rounds up → ${Math.ceil(lenIn*25.4)} mm)</td><td class=\\\"right\\\">${toFixed(fasteners)}</td><td>${strategy.needsWasher? 'With THERMO65' : 'No washer (high density)'}</td>`;
+      tbody.appendChild(tr2);
+    }
+
+    function calc(){
+      const mode = document.querySelector('input[name=\"mode\"]:checked').value;
+      const ci = parseFloat(document.getElementById('ci').value||0);
+      const sheathing = parseFloat(document.getElementById('sheathing').value||0);
+      const embed = parseFloat(document.getElementById('embed').value||1.5);
+      const fpb = parseInt(document.getElementById('fpb').value||5,10);
+      const waste = parseInt(document.getElementById('waste').value||0,10);
+
+      // Insulation type / density mapping
+      const insObj = JSON.parse(document.getElementById('insType').value);
+      const density = parseFloat(document.getElementById('density').value||insObj.density_pcf);
+
+      let fasteners = 0, panels = 0;
+      if(mode==='area'){
+        const area = parseFloat(document.getElementById('wallArea').value||0);
+        const panel = parseFloat(document.getElementById('panelSize').value||32);
+        panels = area / panel;
+        fasteners = computeFasteners('area', area, panel, 0, fpb, waste);
+      } else {
+        const boards = parseInt(document.getElementById('boardCount').value||0,10);
+        fasteners = computeFasteners('boards', 0, 0, boards, fpb, waste);
+      }
+
+      const boxes = Math.ceil(fasteners / 700); // 700 pcs per box
+
+      // Strategy rules
+      const HIGH_DENSITY_PCF = 7.5; // ~120 kg/m3
+      const isHighDensity = density >= HIGH_DENSITY_PCF; // high density → TBS Ø0.32, no washer
+
+      const forceBigDia = ci >= 5.0; // CI ≥ 5 in → Ø0.32
+
+      // Diameter selection: honor user radio unless rules force Ø8
+      let diamIn = parseFloat(document.querySelector('input[name=\"diam\"]:checked').value);
+      if(forceBigDia) diamIn = 0.32;
+      if(isHighDensity) diamIn = 0.32; // override for high density
+      const codeDia = (diamIn >= 0.32) ? 8 : 6;
+
+      const strategy = {
+        needsWasher: !isHighDensity, // low/medium density uses washer
+        useTBS: isHighDensity,       // high density uses TBS
+      };
+
+      const rec = suggestHBS(ci, sheathing, embed) || { inches: 0, mm: 80 };
+
+      // update UI (keep nomination in inches on KPI)
+      const lenInFmt = toEighths(rec.inches);
+      document.getElementById('washers').textContent = toFixed(fasteners);
+      document.getElementById('screws').textContent = toFixed(fasteners);
+      document.getElementById('boxes').textContent = toFixed(boxes);
+      const codePrefix = strategy.useTBS ? 'TBS' : 'HBS';
+      document.getElementById('hbs').textContent = `${codePrefix} ${(codeDia===8?0.32:0.24).toFixed(2)} in (Ø${codeDia}) — ${lenInFmt} (code ${codePrefix}${codeDia}${rec.mm})`;
+
+      const explain = (mode==='area')
+        ? `Using ${fpb} fasteners per 4×8 panel, ${waste}% waste. Density ≈ ${density.toFixed(1)} pcf → ${strategy.useTBS? 'TBS Ø0.32 (no washer)':'THERMOWASHER + HBS'}. CI ${ci.toFixed(2)} in + sheathing ${sheathing.toFixed(2)} + embed ${embed.toFixed(2)} = ${(rec.inches).toFixed(2)} in → ${codePrefix}${codeDia}${rec.mm}. Panels: ${panels.toFixed(2)}.`
+        : `Using ${fpb} fasteners per board, ${waste}% waste. Density ≈ ${density.toFixed(1)} pcf → ${strategy.useTBS? 'TBS Ø0.32 (no washer)':'THERMOWASHER + HBS'}. CI ${ci.toFixed(2)} in + sheathing ${sheathing.toFixed(2)} + embed ${embed.toFixed(2)} = ${(rec.inches).toFixed(2)} in → ${codePrefix}${codeDia}${rec.mm}.`;
+      document.getElementById('explain').textContent = explain;
+
+      buildOrderTable(fasteners, boxes, rec, codeDia, (codeDia===8?0.32:0.24), strategy);
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calc);
+    document.getElementById('insType').addEventListener('change', ()=>{
+      const v = JSON.parse(document.getElementById('insType').value);
+      document.getElementById('density').value = v.density_pcf;
+      calc();
+    });
+
+    document.getElementById('ci').addEventListener('input', ()=>{
+      // auto-select by thickness thresholds (UI feedback only)
+      const ci = parseFloat(document.getElementById('ci').value||0);
+      if(ci >= 5){
+        document.querySelector('input[name="diam"][value="0.32"]').checked = true;
+      } else {
+        document.querySelector('input[name="diam"][value="0.24"]').checked = true;
+      }
+    });
+
+    calc();
+
+    // --- Export CSV ---
+    document.getElementById('exportCsv').addEventListener('click', ()=>{
+      const rows = [["Product","Code","Spec (in)","Qty (pcs)","Notes"]];
+      const tbody = document.querySelector('#orderTable tbody');
+      [...tbody.querySelectorAll('tr')].forEach(tr=>{
+        const cols=[...tr.querySelectorAll('td')].map(td=>td.innerText.replace(/\n/g,' ').trim());
+        rows.push(cols);
+      });
+      const csv = rows.map(r=>r.map(x=>`"${x.replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'thermowasher_order.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // --- Lightweight tests (results in browser console) ---
+    (function runTests(){
+      function assertEq(name, a, b){ if(a!==b){ console.error(`❌ ${name}:`, a, '!=', b);} else { console.log(`✅ ${name}`);} }
+
+      // Existing tests (kept):
+      // T1 default length rounding → 2.0 + 0.5 + 0.16 + 1.5 = 4.16 in ≈ 105.664 mm → round up to 120 mm
+      const rec1 = suggestHBS(2.0, 0.5, 1.5);
+      assertEq('T1: HBS code rounds up to 120 mm', rec1.mm, 120);
+
+      // T2 quantity math for defaults (area mode)
+      // area=1000 ft², panel=32, panels=31.25; 31.25*5=156.25 → ceil=157; +5% waste → 164.85 → ceil=165
+      calc();
+      assertEq('T2: Washers computed for defaults', document.getElementById('washers').textContent, '165');
+
+      // T3 order table has 2 rows after calc
+      const rowsNow = document.querySelectorAll('#orderTable tbody tr').length;
+      assertEq('T3: Order table rows', rowsNow, 2);
+
+      // T3b: Order table header no longer contains "Boxes"
+      const headers = [...document.querySelectorAll('#orderTable thead th')].map(th=>th.textContent.trim());
+      assertEq('T3b: no Boxes header', headers.includes('Boxes'), false);
+
+      // Additional tests:
+      // T4: toEighths rounding up (4.16 → 4 1/4")
+      assertEq('T4: toEighths 4.16 → 4 1/4"', toEighths(4.16), '4 1/4"');
+
+      // T5: exact inch case (3.00 → 3")
+      assertEq('T5: toEighths exact integer', toEighths(3.00), '3"');
+
+      // T6: computeFasteners board mode, 10 boards × 6 fpb, 0% waste → 60
+      const qtyBoards = computeFasteners('boards', 0, 0, 10, 6, 0);
+      assertEq('T6: board mode qty', qtyBoards, 60);
+
+      // T7: 3.0 in CI + 5/8 in sheathing → 3 + 0.625 + 1.5 = 5.125 in → 130.2 mm → round to 140 mm
+      const rec2 = suggestHBS(3.0, 0.625, 1.5);
+      assertEq('T7: 3in CI case rounds to 140 mm', rec2.mm, 140);
+
+      // T8: area mode computeFasteners helper matches explicit calc
+      const qtyArea = computeFasteners('area', 1000, 32, 0, 5, 5);
+      assertEq('T8: area mode qty helper', qtyArea, 165);
+
+      // T9: diameter toggle → 0.32 in should switch to HBS8 code prefix (ci default is <5, so radio should be honored)
+      const diam032 = document.querySelector('input[name="diam"][value="0.32"]');
+      diam032.checked = true; calc();
+      const hbsText = document.getElementById('hbs').textContent;
+      const codeStarts8 = hbsText.includes('HBS8');
+      assertEq('T9: code prefix switches to HBS8 for 0.32 in', codeStarts8, true);
+      // restore default 0.24 in
+      document.querySelector('input[name="diam"][value="0.24"]').checked = true; calc();
+
+      // T11: High-density selection (Mineral wool) → TBS, no washer row
+      document.getElementById('insType').value = '{"name":"Mineral wool (Comfortboard 80)","density_pcf":8.0,"source":"mw"}';
+      document.getElementById('density').value = 8.0; calc();
+      const kpiText = document.getElementById('hbs').textContent;
+      assertEq('T11a: KPI switches to TBS', kpiText.includes('TBS8'), true);
+      const rowsHD = document.querySelectorAll('#orderTable tbody tr');
+      assertEq('T11b: High density → only 1 row (no washer)', rowsHD.length, 1);
+
+      // T12: Low-density EPS selection → HBS + washer row present
+      document.getElementById('insType').value = '{"name":"EPS (Type I–II)","density_pcf":1.25,"source":"eps"}';
+      document.getElementById('density').value = 1.25; calc();
+      const rowsLD = document.querySelectorAll('#orderTable tbody tr');
+      assertEq('T12: Low density → washer + HBS rows', rowsLD.length, 2);
+
+      // T13: CI > 5 in forces Ø0.32 even if radio says 0.24
+      document.querySelector('input[name="diam"][value="0.24"]').checked = true;
+      document.getElementById('ci').value = 6.0; calc();
+      const forceText = document.getElementById('hbs').textContent;
+      assertEq('T13: CI>5 forces Ø8', forceText.includes('Ø8'), true);
+      // restore CI and radio
+      document.getElementById('ci').value = 2.0; document.querySelector('input[name="diam"][value="0.24"]').checked = true; calc();
+
+      // T10: buildOrderTable defaults should not throw when called without diameter args
+      const recTest = suggestHBS(2.0, 0.5, 1.5);
+      try {
+        buildOrderTable(10, 1, recTest, undefined, undefined, {needsWasher:true,useTBS:false});
+        console.log('✅ T10: buildOrderTable default params ok');
+      } catch(e){
+        console.error('❌ T10: buildOrderTable default params threw', e);
+      }
+
+      // T14: High density explanation should not mention washer seat
+      document.getElementById('insType').value = '{"name":"Mineral wool (Comfortboard 80)","density_pcf":8.0,"source":"mw"}';
+      document.getElementById('density').value = 8.0; calc();
+      const explainHD = document.getElementById('explain').textContent;
+      assertEq('T14: No "washer seat" in high-density path', /washer seat/.test(explainHD), false);
+
+      // T15: ci < 5 and radio = 0.24 → HBS6 (ensure low-density context)
+      document.getElementById('insType').value = '{"name":"EPS (Type I–II)","density_pcf":1.25,"source":"eps"}';
+      document.getElementById('density').value = 1.25;
+      document.getElementById('ci').value = 2.0;
+      document.querySelector('input[name="diam"][value="0.24"]').checked = true; calc();
+      const txt15 = document.getElementById('hbs').textContent;
+      assertEq('T15: ci<5 + radio 0.24 → HBS6', txt15.includes('HBS6'), true);
+
+      // New tests to guard against prior regressions
+      // T16: suggestHBS returns an object with numeric fields and no syntax errors
+      const t16 = suggestHBS(0, 0.5, 1.5);
+      assertEq('T16a: suggestHBS inches is number', typeof t16.inches, 'number');
+      assertEq('T16b: suggestHBS mm is number', typeof t16.mm, 'number');
+
+      // T17: ci input listener toggles radios without throwing
+      document.getElementById('ci').value = 5.5; document.getElementById('ci').dispatchEvent(new Event('input'));
+      assertEq('T17a: ci>=5 sets 0.32 radio', document.querySelector('input[name="diam"][value="0.32"]').checked, true);
+      document.getElementById('ci').value = 4.0; document.getElementById('ci').dispatchEvent(new Event('input'));
+      assertEq('T17b: ci<5 sets 0.24 radio', document.querySelector('input[name="diam"][value="0.24"]').checked, true);
+
+      // T18: High density should override to TBS at ci<5 (guard rule)
+      document.getElementById('insType').value = '{"name":"Mineral wool (Comfortboard 80)","density_pcf":8.0,"source":"mw"}';
+      document.getElementById('density').value = 8.0; document.getElementById('ci').value = 2.0;
+      document.querySelector('input[name="diam"][value="0.24"]').checked = true; calc();
+      const txt18 = document.getElementById('hbs').textContent;
+      assertEq('T18: High density overrides to TBS8 at ci<5', txt18.includes('TBS8'), true);
+    })();
+  </script>
+</body>
+</html>
