@@ -181,8 +181,8 @@
           <figcaption class="figcap">Application photo.<\/figcaption>
         </figure>
         <figure class="fig">
-          <img class="imgfit" src="https://www.rothoblaas.com/images/THERMOWASHER-1750318121.png?w=1080&h=1080" referrerpolicy="no-referrer" alt="THERMOWASHER product image" />
-          <figcaption class="figcap">THERMOWASHER product image.</figcaption>
+          <img id="productImg" class="imgfit" src="https://www.rothoblaas.com/images/THERMOWASHER-1750318121.png?w=1080&h=1080" referrerpolicy="no-referrer" alt="THERMOWASHER product image" />
+          <figcaption id="productCap" class="figcap">THERMOWASHER product image.</figcaption>
         </figure>
       </div>
     </div>
@@ -346,6 +346,21 @@
       document.getElementById('explain').textContent = explain;
 
       buildOrderTable(fasteners, boxes, rec, codeDia, (codeDia===8?0.32:0.24), strategy);
+
+      // --- Dynamic product image (TBS vs THERMOWASHER) ---
+      const prodImg = document.getElementById('productImg');
+      const prodCap = document.getElementById('productCap');
+      if(prodImg && prodCap){
+        if(strategy.useTBS){
+          prodImg.src = 'https://www.rothoblaas.com/images/TBS-1750317680.png?w=1080&h=1080';
+          prodImg.alt = 'TBS product image';
+          prodCap.textContent = 'TBS product image.';
+        } else {
+          prodImg.src = 'https://www.rothoblaas.com/images/THERMOWASHER-1750318121.png?w=1080&h=1080';
+          prodImg.alt = 'THERMOWASHER product image';
+          prodCap.textContent = 'THERMOWASHER product image.';
+        }
+      }
     }
 
     document.getElementById('calcBtn').addEventListener('click', calc);
@@ -495,6 +510,17 @@
       document.querySelector('input[name="diam"][value="0.24"]').checked = true; calc();
       const txt18 = document.getElementById('hbs').textContent;
       assertEq('T18: High density overrides to TBS8 at ci<5', txt18.includes('TBS8'), true);
+          // T19: Product image switches to TBS for high density
+      document.getElementById('insType').value = '{"name":"Mineral wool (Comfortboard 80)","density_pcf":8.0,"source":"mw"}';
+      document.getElementById('density').value = 8.0; calc();
+      const imgHD = document.getElementById('productImg');
+      assertEq('T19: product image is TBS on high density', /\/TBS-/.test(imgHD.src), true);
+
+      // T20: Product image switches back to THERMOWASHER for low density
+      document.getElementById('insType').value = '{"name":"EPS (Type I–II)","density_pcf":1.25,"source":"eps"}';
+      document.getElementById('density').value = 1.25; calc();
+      const imgLD = document.getElementById('productImg');
+      assertEq('T20: product image is THERMOWASHER on low density', /\/THERMOWASHER-/.test(imgLD.src), true);
     })();
   </script>
 </body>
