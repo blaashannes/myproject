@@ -1,5 +1,3 @@
-const { useEffect, useMemo, useRef, useState } = React;
-
 /**
  * Rothoblaas — TERRALOCK Fastener Takeoff (UMD+Babel, compact)
  * - Sketch drawer: grid snap (6/12/24/36/48 in), click to add, hold‑drag to move, right‑click to delete,
@@ -7,8 +5,16 @@ const { useEffect, useMemo, useRef, useState } = React;
  * - US construction wording; boards always run ⟂ to joists; joist 90° toggle.
  * - Inputs: L (board width, in), f (gap, in), i (joist spacing, on‑center, in), waste factor.
  * - Outputs: board rows across, joist count, TERRALOCK clip count (± waste), area.
- * - No imports/exports; expose globally as window.DeckCalculator for UMD+Babel.
+ * - UMD+Babel friendly (no imports/exports). Exposes `window.DeckCalculator`.
+ *
+ * NOTE: This file assumes React & ReactDOM UMD are loaded by your HTML **before** this script.
+ * If they aren't, we avoid a hard ReferenceError and log a clear console message instead.
  */
+
+// Soft guard so missing React doesn't crash at parse time.
+if (typeof window !== 'undefined' && !window.React) {
+  console.error('[Rothoblaas Deck Calculator] React UMD not found. Make sure your index.html loads React & ReactDOM before this file.');
+}
 
 // ===== Helpers =====
 const inToFt = (i) => i / 12;
@@ -23,14 +29,15 @@ const adjustSegmentLength = (a, b, L) => { const dx = b.x - a.x, dy = b.y - a.y;
 
 // ===== Branding TopBar =====
 function TopBar() {
+  // Use a single wrapper element instead of a fragment to avoid any JSX adjacency edge‑cases.
   return (
-    <>
+    <div>
       <style>{`.topbar{position:sticky;top:0;z-index:1000;width:100%;background:#0b1220;border-bottom:1px solid rgba(148,163,184,.18);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brandlogo{height:36px;filter:brightness(0) invert(1)}.backlink{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #334155;border-radius:9999px;color:#f8fafc;background:#0b1220}.backlink:hover{background:#111827}`}</style>
       <div className="topbar">
         <a className="homeLink" href="https://blaashannes.github.io/myproject/" title="Go to homepage"><img className="brandlogo" src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg" alt="Rothoblaas" /></a>
         <a className="backlink" href="https://blaashannes.github.io/myproject/" aria-label="Back to start page">← Back to start</a>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -46,13 +53,13 @@ function renderGrid(PAD, maxW, maxH, stepPx = 24, label = "") {
 // ===== Sketcher =====
 function DeckSketcher({ points, setPoints }) {
   const PAD = 24, maxW = 860, maxH = 400;
-  const [snapIn, setSnapIn] = useState(12); // 6,12,24,36,48 inches
-  const [sel, setSel] = useState(-1);
-  const [drag, setDrag] = useState(false);
-  const sup = useRef(false);
-  const [editI, setEditI] = useState(-1);
-  const [editV, setEditV] = useState(0);
-  const [editPos, setEditPos] = useState({ x: 0, y: 0 });
+  const [snapIn, setSnapIn] = React.useState(12); // 6,12,24,36,48 inches
+  const [sel, setSel] = React.useState(-1);
+  const [drag, setDrag] = React.useState(false);
+  const sup = React.useRef(false);
+  const [editI, setEditI] = React.useState(-1);
+  const [editV, setEditV] = React.useState(0);
+  const [editPos, setEditPos] = React.useState({ x: 0, y: 0 });
 
   const xs = points.map(p => p.x), ys = points.map(p => p.y);
   const minX = Math.min(...xs, 0), minY = Math.min(...ys, 0);
@@ -76,8 +83,8 @@ function DeckSketcher({ points, setPoints }) {
   const onMove = (e) => {
     if (!drag || sel < 0) return;
     const r = e.currentTarget.getBoundingClientRect();
-    const ft = fromPx(e.clientX - r.left, e.clientY - r.top);
-    const s = snapPointToGrid(ft, snapIn);
+    theFt = fromPx(e.clientX - r.left, e.clientY - r.top);
+    const s = snapPointToGrid(theFt, snapIn);
     setPoints(points.map((p, i) => i === sel ? s : p));
   };
   const end = () => { if (drag) sup.current = true; setDrag(false); setSel(-1); };
@@ -171,17 +178,17 @@ function DeckSketcher({ points, setPoints }) {
 // ===== Main (TERRALOCK‑only) =====
 function DeckCalculator() {
   // Sketch points (default: 20' x 13' rectangle for a quick start)
-  const [sketchPts, setSketchPts] = useState([{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 20, y: 13 }, { x: 0, y: 13 }]);
+  const [sketchPts, setSketchPts] = React.useState([{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 20, y: 13 }, { x: 0, y: 13 }]);
   const { area: sketchArea, perim: sketchPerim, bbox } = polyAreaPerimeter(sketchPts);
   const B = bbox.w || 20; // ft
   const H = bbox.h || 13; // ft
 
   // Inputs (US construction)
-  const [L, setL] = useState(5.5);   // board width L [in]
-  const [f, setf] = useState(0.25);  // board gap f [in]
-  const [iOC, setIOC] = useState(16); // joist spacing i (on-center) [in]
-  const [rot, setRot] = useState(false); // rotate joists 90°
-  const [waste, setWaste] = useState(1.05);
+  const [L, setL] = React.useState(5.5);   // board width L [in]
+  const [f, setf] = React.useState(0.25);  // board gap f [in]
+  const [iOC, setIOC] = React.useState(16); // joist spacing i (on-center) [in]
+  const [rot, setRot] = React.useState(false); // rotate joists 90°
+  const [waste, setWaste] = React.useState(1.05);
 
   // Orientation: boards ⟂ joists
   const boardsParallelToB = !rot;            // boards run along B when joists are not rotated
@@ -191,14 +198,14 @@ function DeckCalculator() {
 
   // Counts
   const moduleIn = L + f;
-  const boardsAcross = useMemo(() => floor((acrossFt * 12 + f) / Math.max(moduleIn, 0.01)), [acrossFt, moduleIn, f]);
-  const joistCount = useMemo(() => floor((joistsAcrossFt * 12) / Math.max(iOC, 0.01)) + 1, [joistsAcrossFt, iOC]);
+  const boardsAcross = React.useMemo(() => floor((acrossFt * 12 + f) / Math.max(moduleIn, 0.01)), [acrossFt, moduleIn, f]);
+  const joistCount = React.useMemo(() => floor((joistsAcrossFt * 12) / Math.max(iOC, 0.01)) + 1, [joistsAcrossFt, iOC]);
   const clipsNoWaste = boardsAcross * joistCount;
   const clips = Math.ceil(clipsNoWaste * waste);
   const areaSqft = round(sketchArea, 2);
 
   // Parametric preview (boards + joists)
-  const Graphic = useMemo(() => {
+  const Graphic = React.useMemo(() => {
     const PAD = 24, maxW = 860, maxH = 420; const bounds = { w: B, h: H };
     const s = Math.min((maxW - PAD * 2) / Math.max(bounds.w, 1), (maxH - PAD * 2) / Math.max(bounds.h, 1));
     const toPx = (p) => ({ x: PAD + p.x * s, y: PAD + p.y * s });
@@ -235,8 +242,8 @@ function DeckCalculator() {
     );
   }, [sketchPts, B, H, L, f, moduleIn, boardsAcross, iOC, joistCount, rot, boardsParallelToB]);
 
-  // Lightweight tests (keep & add one extra)
-  useEffect(() => { try {
+  // Lightweight tests (kept + extra)
+  React.useEffect(() => { try {
     const sq = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }], s = polyAreaPerimeter(sq);
     console.assert(Math.abs(s.area - 100) < 1e-6, 'Area 10x10');
     console.assert(Math.abs(s.perim - 40) < 1e-6, 'Perim 10x10');
@@ -244,6 +251,8 @@ function DeckCalculator() {
     console.assert(Math.abs(B3.x - 5) < 1e-6, 'Adjust seg');
     const rows = floor((10 * 12 + 0.25) / (5.5 + 0.25)); console.assert(rows === 20, 'Rows calc');
     const jc = floor((8 * 12) / 16) + 1; console.assert(jc === 7, 'Joists count');
+    // Extra: snapping sanity
+    const p = snapPointToGrid({ x: 2.49, y: 3.51 }, 12); console.assert(Math.abs(p.x - 2) < 1e-9 && Math.abs(p.y - 4) < 1e-9, 'Snap 12in');
   } catch (e) { console.warn('Tests failed:', e); } }, []);
 
   return (
@@ -293,9 +302,25 @@ function DeckCalculator() {
 }
 
 // ===== UI bits =====
-const Section = ({ title, children }) => (<section className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5 md:p-6"><h2 className="text-lg md:text-xl font-extrabold tracking-tight mb-4">{title}</h2>{children}</section>);
-const Readout = ({ label, value }) => (<div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"><div className="text-xs text-neutral-500">{label}</div><div className="text-lg font-semibold tabular-nums">{value}</div></div>);
-const NumInput = ({ label, value, setValue, step = 1 }) => (<label className="block"><span className="text-xs text-neutral-600">{label}</span><input type="number" value={value} step={step} onChange={(e) => setValue(e.target.valueAsNumber)} className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10" /></label>);
+const Section = ({ title, children }) => (
+  <section className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5 md:p-6">
+    <h2 className="text-lg md:text-xl font-extrabold tracking-tight mb-4">{title}</h2>
+    {children}
+  </section>
+);
+const Readout = ({ label, value }) => (
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+    <div className="text-xs text-neutral-500">{label}</div>
+    <div className="text-lg font-semibold tabular-nums">{value}</div>
+  </div>
+);
+const NumInput = ({ label, value, setValue, step = 1 }) => (
+  <label className="block">
+    <span className="text-xs text-neutral-600">{label}</span>
+    <input type="number" value={value} step={step} onChange={(e) => setValue(e.target.valueAsNumber)}
+           className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
+  </label>
+);
 
 // ===== Expose for UMD+Babel =====
 window.DeckCalculator = DeckCalculator;
