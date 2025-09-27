@@ -5,16 +5,8 @@
  * - US construction wording; boards always run ⟂ to joists; joist 90° toggle.
  * - Inputs: L (board width, in), f (gap, in), i (joist spacing, on‑center, in), waste factor.
  * - Outputs: board rows across, joist count, TERRALOCK clip count (± waste), area.
- * - UMD+Babel friendly (no imports/exports). Exposes `window.DeckCalculator`.
- *
- * NOTE: This file assumes React & ReactDOM UMD are loaded by your HTML **before** this script.
- * If they aren't, we avoid a hard ReferenceError and log a clear console message instead.
+ * - UMD+Babel friendly (no imports/exports). Exposes `window.DeckCalculator` and **auto‑mounts safely** if possible.
  */
-
-// Soft guard so missing React doesn't crash at parse time.
-if (typeof window !== 'undefined' && !window.React) {
-  console.error('[Rothoblaas Deck Calculator] React UMD not found. Make sure your index.html loads React & ReactDOM before this file.');
-}
 
 // ===== Helpers =====
 const inToFt = (i) => i / 12;
@@ -29,7 +21,7 @@ const adjustSegmentLength = (a, b, L) => { const dx = b.x - a.x, dy = b.y - a.y;
 
 // ===== Branding TopBar =====
 function TopBar() {
-  // Use a single wrapper element instead of a fragment to avoid any JSX adjacency edge‑cases.
+  // single wrapper avoids any fragment/adjacency parsing issues
   return (
     <div>
       <style>{`.topbar{position:sticky;top:0;z-index:1000;width:100%;background:#0b1220;border-bottom:1px solid rgba(148,163,184,.18);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brandlogo{height:36px;filter:brightness(0) invert(1)}.backlink{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #334155;border-radius:9999px;color:#f8fafc;background:#0b1220}.backlink:hover{background:#111827}`}</style>
@@ -83,7 +75,7 @@ function DeckSketcher({ points, setPoints }) {
   const onMove = (e) => {
     if (!drag || sel < 0) return;
     const r = e.currentTarget.getBoundingClientRect();
-    theFt = fromPx(e.clientX - r.left, e.clientY - r.top);
+    const theFt = fromPx(e.clientX - r.left, e.clientY - r.top);
     const s = snapPointToGrid(theFt, snapIn);
     setPoints(points.map((p, i) => i === sel ? s : p));
   };
@@ -235,7 +227,7 @@ function DeckCalculator() {
       <svg viewBox={`0 0 ${maxW} ${maxH}`} className="w-full h-[280px] md:h-[420px]">
         <defs><clipPath id="clip"><path d={d} /></clipPath></defs>
         <path d={d} className="fill-white stroke-black" strokeWidth={2} />
-        <g clipPath="url(#clip)">{stripes}{jo}</g>
+        <g clipPath="url(#clip)">{[...stripes, ...jo]}</g>
         <text x={PAD + (bounds.w * s) / 2} y={PAD - 8} textAnchor="middle" className="text-[12px]">B = {fmtFt(B)}</text>
         <text x={PAD - 8} y={PAD + (bounds.h * s) / 2} textAnchor="end" dominantBaseline="middle" className="text-[12px]">H = {fmtFt(H)}</text>
       </svg>
@@ -251,7 +243,6 @@ function DeckCalculator() {
     console.assert(Math.abs(B3.x - 5) < 1e-6, 'Adjust seg');
     const rows = floor((10 * 12 + 0.25) / (5.5 + 0.25)); console.assert(rows === 20, 'Rows calc');
     const jc = floor((8 * 12) / 16) + 1; console.assert(jc === 7, 'Joists count');
-    // Extra: snapping sanity
     const p = snapPointToGrid({ x: 2.49, y: 3.51 }, 12); console.assert(Math.abs(p.x - 2) < 1e-9 && Math.abs(p.y - 4) < 1e-9, 'Snap 12in');
   } catch (e) { console.warn('Tests failed:', e); } }, []);
 
@@ -317,10 +308,28 @@ const Readout = ({ label, value }) => (
 const NumInput = ({ label, value, setValue, step = 1 }) => (
   <label className="block">
     <span className="text-xs text-neutral-600">{label}</span>
-    <input type="number" value={value} step={step} onChange={(e) => setValue(e.target.valueAsNumber)}
+    <input type="number" value={Number.isFinite(value) ? value : ''} step={step} onChange={(e) => setValue(e.target.valueAsNumber)}
            className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
   </label>
 );
 
 // ===== Expose for UMD+Babel =====
 window.DeckCalculator = DeckCalculator;
+
+// Optional safe auto‑mount (prevents common #130 by ensuring we create a React element)
+(function tryAutoMount(){
+  try {
+    if (!window || !window.React || !window.ReactDOM) return; // require UMDs
+    const host = document.getElementById('root');
+    if (!host || host.__rbMounted) return;
+    // If a previous script already mounted, skip.
+    host.__rbMounted = true;
+    const root = window.ReactDOM.createRoot(host);
+    root.render(React.createElement(window.DeckCalculator));
+  } catch (e) {
+    // swallow — only a convenience path
+  }
+})();
+
+// Sanity: ensure global export type
+try { console.assert(typeof window.DeckCalculator === 'function', 'DeckCalculator must be a function'); } catch (_) {}
