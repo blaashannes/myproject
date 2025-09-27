@@ -88,5 +88,16 @@
       </div>
     </section>
   </main>
+
+  <!-- React and calculator setup -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="react" src="./rothoblaas_deck_calculator_us_brand_parametric_graphics.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<DeckCalculator />);
+  </script>
 </body>
 </html>
