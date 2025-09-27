@@ -150,7 +150,6 @@
       <span class="pill">ALUSTART Fastener Take‑Off</span>
     </div>
     <div class="actions">
-      <button class="btn ghost" id="addRowBtn" title="Add a new wall run (row)">+ Add run</button>
       <button class="btn" id="saveBtn" title="Save inputs in this browser">Save</button>
       <button class="btn" id="loadBtn" title="Load saved inputs">Load</button>
       <button class="btn" id="resetBtn" title="Clear all inputs">Reset</button>
@@ -167,6 +166,14 @@
           <div>
             <label for="job">Job / Project name</label>
             <input id="job" type="text" placeholder="e.g., Oak Street CLT Core"/>
+          </div>
+          <div>
+            <label for="sku_alustart">ALUSTART profile SKU</label>
+            <input id="sku_alustart" type="text" placeholder="e.g., ALUSTART120"/>
+          </div>
+          <div>
+            <label for="sku_membrane">Membrane SKU</label>
+            <input id="sku_membrane" type="text" placeholder="e.g., STARTBAND / PROTECT"/>
           </div>
           <div>
             <label for="waste">Waste factor (bars)</label>
@@ -186,11 +193,7 @@
           <div class="grid cols-4">
             <div>
               <span class="lbl">Constants</span>
-              <div class="hint">Bar length <strong id="bl">7.874</strong> ft · Anchors/bar <strong id="apb">12</strong> · Jig interval <strong id="ji">2.297</strong> ft · 304.8 mm/ft</div>
-            </div>
-            <div>
-              <label><input id="capHoles" type="checkbox" checked /> Cap anchors to available holes per bars</label>
-              <div class="hint">Prevents spacing math from exceeding <em>12 × bars</em>.</div>
+              <div class="hint">Bar length <strong id="bl">7.874</strong> ft · Anchors/bar <strong id="apb">12</strong> · Jig interval <strong id="ji">2.297</strong> ft</div>
             </div>
             <div class="muted">
               <div><span class="pill">Fastener patterns → density (pcs/ft)</span></div>
@@ -229,7 +232,12 @@
         <h2>Wall Runs</h2>
         <div class="content">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px">
-            <div class="hint">One card per straight wall segment. Anchor spacing uses <strong>hole multiples</strong> (200 mm).</div>
+            <div class="hint">One card per straight wall segment. Anchor spacing uses <strong>hole multiples</strong> (~7.9 in).</div>
+            <div style="display:flex; gap:8px; align-items:center">
+              <button class="btn ghost" id="addRowBtn" title="Add a new wall run">+ Add run</button>
+              <button class="btn ghost" id="toggleCompact" title="Toggle compact layout">Compact layout</button>
+            </div>
+          </div>
             <button class="btn ghost" id="toggleCompact" title="Toggle compact layout">Compact layout</button>
           </div>
           <div id="runlist" class="runlist"></div>
@@ -249,7 +257,7 @@
           <div class="kpi">
             <div class="tile">
               <div class="lbl">Total perimeter length</div>
-              <div class="big" id="k_total_len">0.000 ft</div>
+              <div class="big" id="k_total_len">0.0 ft</div>
             </div>
             <div class="tile">
               <div class="lbl">ALUSTART bars (with waste)</div>
@@ -263,12 +271,29 @@
             </div>
             <div class="tile">
               <div class="lbl">Membrane under profile</div>
-              <div class="big" id="k_membrane">0.000 ft</div>
+              <div class="big" id="k_membrane">0.0 ft</div>
             </div>
           </div>
           <div class="grid cols-4" style="margin-top:12px">
             <div class="tile">
               <div class="lbl">Timber fasteners (LBA nails)</div>
+              <div class="big" id="k_lba">0</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">Timber fasteners (LBS screws)</div>
+              <div class="big" id="k_lbs">0</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">HBS screws @ ~11.8 in</div>
+              <div class="big" id="k_hbs">0</div>
+              <div class="hint">Model: HBS880</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">JIGSTARTI (linear)</div>
+              <div class="big" id="k_jigi">0</div>
+              <div class="hint">≈ every 2.297 ft</div>
+            </div>
+          </div>
               <div class="big" id="k_lba">0</div>
             </div>
             <div class="tile">
@@ -285,6 +310,21 @@
               <div class="big" id="k_jigl">0</div>
               <div class="hint">Corners + 2 × T‑intersections</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Order Summary</h2>
+        <div class="content">
+          <div class="hint" style="margin-bottom:8px">Auto-filled; you can edit codes before exporting CSV.</div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr><th>Product</th><th>Code</th><th class="num">Quantity</th></tr>
+              </thead>
+              <tbody id="orderBody"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -310,6 +350,7 @@
     const ANCHORS_PER_BAR = 12;
     const JIG_INTERVAL_FT = 2.297; // JIGSTARTI typical spacing
     const MM_PER_FT = 304.8;
+    const HBS_SPACING_MM = 300; // ≈11.8 in big-hole HBS880 spacing
 
     // Pattern densities (pcs/ft)
     const DENSITY = {
@@ -373,12 +414,12 @@
           <div>
             <label>Anchor spacing</label>
             <select data-field="spacing_mm">
-              <option value="200" ${data.spacing_mm===200?'selected':''}>Every hole (200mm)</option>
-              <option value="400" ${data.spacing_mm===400?'selected':''}>2nd hole (400mm)</option>
-              <option value="600" ${data.spacing_mm===600?'selected':''}>3rd hole (600mm)</option>
-              <option value="800" ${data.spacing_mm===800?'selected':''}>4th hole (800mm)</option>
-              <option value="1000" ${data.spacing_mm===1000?'selected':''}>5th hole (1000mm)</option>
-              <option value="1200" ${data.spacing_mm===1200?'selected':''}>6th hole (1200mm)</option>
+              <option value="200" ${data.spacing_mm===200?'selected':''}>Every hole (~7.9 in)</option>
+              <option value="400" ${data.spacing_mm===400?'selected':''}>2nd hole (~15.7 in)</option>
+              <option value="600" ${data.spacing_mm===600?'selected':''}>3rd hole (~23.6 in)</option>
+              <option value="800" ${data.spacing_mm===800?'selected':''}>4th hole (~31.5 in)</option>
+              <option value="1000" ${data.spacing_mm===1000?'selected':''}>5th hole (~39.4 in)</option>
+              <option value="1200" ${data.spacing_mm===1200?'selected':''}>6th hole (~47.2 in)</option>
             </select>
           </div>
           <div>
@@ -422,11 +463,18 @@
       const d = DENSITY[pattern] || 0;
       return roundup(length_ft * d);
     }
+    function hbsPerRun(length_ft, edge_mm){
+      const Lmm = length_ft * MM_PER_FT;
+      const usable = Lmm - 2*edge_mm;
+      if (usable < 0) return 0;
+      return max(0, 1 + floor( usable / HBS_SPACING_MM ));
+    }
 
     // ======== Compute ========
     function computeAll(){
       let totalLen = 0;
       let totalAnch = 0;
+      let totalHBS = 0;
       let totalTimber = 0;
       let totalLBA = 0;
       let totalLBS = 0;
@@ -450,12 +498,14 @@
 
         const timber = timberPerRun(L, pattern);
         const anchors = anchorsPerRun(L, spacing, edge);
+        const hbs = hbsPerRun(L, edge);
 
         tr.querySelector('[data-cell="timber"]').textContent = timber.toLocaleString();
-        tr.querySelector('[data-cell="anchors"]').textContent = anchors.toLocaleString();
+        tr.querySelector('[data-cell="anchors"]').textContent = (anchors).toLocaleString();
 
         totalLen += L;
         totalAnch += anchors;
+        totalHBS += hbs;
         totalTimber += timber;
 
         if (fastener === 'LBA nails') totalLBA += timber; else totalLBS += timber;
@@ -474,19 +524,18 @@
       const barsRaw = (totalLen / BAR_LENGTH_FT) * (1 + waste);
       const bars = ceil(barsRaw);
 
-      // Cap anchors to available holes if needed
+      // Cap anchors to available holes silently
       let anchors = totalAnch;
-      if ($('#capHoles').checked){
-        anchors = min(anchors, bars * ANCHORS_PER_BAR);
-      }
+      anchors = Math.min(anchors, bars * ANCHORS_PER_BAR);
 
       // KPIs
-      $('#k_total_len').textContent = `${totalLen.toFixed(3)} ft`;
+      $('#k_total_len').textContent = `${totalLen.toFixed(1)} ft`;
       $('#k_bars').textContent = bars.toLocaleString();
       $('#k_anchors').textContent = anchors.toLocaleString();
-      $('#k_membrane').textContent = `${totalLen.toFixed(3)} ft`;
+      $('#k_membrane').textContent = `${totalLen.toFixed(1)} ft`;
       $('#k_lba').textContent = totalLBA.toLocaleString();
       $('#k_lbs').textContent = totalLBS.toLocaleString();
+      $('#k_hbs').textContent = totalHBS.toLocaleString();
       $('#k_jigi').textContent = ceil(totalLen / JIG_INTERVAL_FT).toLocaleString();
 
       const corners = toNumber($('#corners').value);
@@ -524,10 +573,11 @@
       return {
         meta: {
           job: $('#job').value,
+          sku_alustart: $('#sku_alustart').value,
+          sku_membrane: $('#sku_membrane').value,
           waste: toNumber($('#waste').value),
           corners: toNumber($('#corners').value),
-          tees: toNumber($('#tees').value),
-          capHoles: $('#capHoles').checked
+          tees: toNumber($('#tees').value)
         },
         rows
       };
@@ -536,10 +586,11 @@
     function deserialize(state){
       if (!state) return;
       $('#job').value = state.meta?.job || '';
+      $('#sku_alustart').value = state.meta?.sku_alustart || '';
+      $('#sku_membrane').value = state.meta?.sku_membrane || '';
       $('#waste').value = state.meta?.waste ?? 0.05;
       $('#corners').value = state.meta?.corners ?? 0;
       $('#tees').value = state.meta?.tees ?? 0;
-      $('#capHoles').checked = !!state.meta?.capHoles;
 
       runlist.innerHTML = '';
       (state.rows || []).forEach(r=> addRow(r));
@@ -562,10 +613,11 @@
     function resetAll(){
       if(!confirm('Clear all inputs?')) return;
       $('#job').value = '';
+      $('#sku_alustart').value = '';
+      $('#sku_membrane').value = '';
       $('#waste').value = 0.05;
       $('#corners').value = 0;
       $('#tees').value = 0;
-      $('#capHoles').checked = true;
       runlist.innerHTML = '';
       addRow();
       computeAll();
@@ -577,35 +629,55 @@
       const state = serialize();
       let csv = '';
       csv += 'Job,'+ (state.meta.job||'') +"\n";
+      csv += `ALUSTART SKU,${state.meta.sku_alustart||''}\n`;
+      csv += `Membrane SKU,${state.meta.sku_membrane||''}\n`;
       csv += `Waste Factor,${state.meta.waste}\n`;
       csv += `Corners,${state.meta.corners}\n`;
       csv += `T-Intersections,${state.meta.tees}\n`;
-      csv += `Cap Anchors To Holes,${state.meta.capHoles}\n`;
       csv += '\n';
       csv += 'Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors\n';
 
       // We need displayed computed cells, so recompute per row here
-      let totalLen=0, totalTimber=0, totalAnch=0, totalLBA=0, totalLBS=0;
+      let totalLen=0, totalTimber=0, totalAnch=0, totalLBA=0, totalLBS=0, totalHBS=0;
       state.rows.forEach(r=>{
         const timber = timberPerRun(r.length_ft, r.pattern);
         const anchors = anchorsPerRun(r.length_ft, r.spacing_mm, r.edge_mm);
+        const hbs = hbsPerRun(r.length_ft, r.edge_mm);
         csv += `${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}\n`;
-        totalLen += r.length_ft; totalTimber += timber; totalAnch += anchors;
+        totalLen += r.length_ft; totalTimber += timber; totalAnch += anchors; totalHBS += hbs;
         if (r.fastener==='LBA nails') totalLBA += timber; else totalLBS += timber;
       });
       const bars = ceil((totalLen/BAR_LENGTH_FT)*(1+state.meta.waste));
       let anchors = totalAnch;
-      if (state.meta.capHoles) anchors = Math.min(anchors, bars*ANCHORS_PER_BAR);
+      anchors = Math.min(anchors, bars*ANCHORS_PER_BAR);
 
       csv += '\nTotals,,,,,,,'+totalTimber+','+anchors+'\n';
       csv += `Total Length ft,${totalLen}\n`;
       csv += `Bars,${bars}\n`;
       csv += `Anchors (final),${anchors}\n`;
-      csv += `Membrane ft,${totalLen}\n`;
+      csv += `HBS880 Screws,${totalHBS}\n`;
+      csv += `Membrane ft,${totalLen.toFixed(1)}\n`;
       csv += `JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}\n`;
       csv += `JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}\n`;
       csv += `LBA Nails,${totalLBA}\n`;
       csv += `LBS Screws,${totalLBS}\n`;
+
+      // Order Summary
+      csv += `\nOrder Summary\n`;
+      csv += `Product,Code,Quantity\n`;
+      const barsFinal = bars;
+      const anchorsFinal = anchors;
+      const rowsOS = [
+        ['ALUSTART bars', (state.meta.sku_alustart || '') , barsFinal],
+        ['Membrane under profile (ft)', (state.meta.sku_membrane || ''), totalLen.toFixed(1)],
+        ['Anchors to concrete', '', anchorsFinal],
+        ['HBS screw (Ø0.32\")', 'HBS880', totalHBS],
+        ['Timber fasteners – LBA nails', '', totalLBA],
+        ['Timber fasteners – LBS screws', '', totalLBS],
+        ['JIGSTARTI', 'JIGSTARTI', ceil(totalLen/JIG_INTERVAL_FT)],
+        ['JIGSTARTL', 'JIGSTARTL', (state.meta.corners + 2*state.meta.tees)]
+      ];
+      rowsOS.forEach(r=>{ csv += `${r[0]},${r[1]},${r[2]}\n`; });
 
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
@@ -635,7 +707,7 @@
     $('#csvBtn').addEventListener('click', exportCSV);
     $('#printBtn').addEventListener('click', ()=> window.print());
 
-    $('#job, #waste, #corners, #tees, #capHoles').addEventListener('input', computeAll);
+    $('#job, #sku_alustart, #sku_membrane, #waste, #corners, #tees').addEventListener('input', computeAll);
 
     // Show constants in UI
     $('#bl').textContent = BAR_LENGTH_FT.toFixed(3);
@@ -644,6 +716,8 @@
 
     // Startup
     addRow({ name: 'Run 1', length_ft: 20, panel: 'CLT', fastener: 'LBA nails', pattern: 'TOTAL', spacing_mm: 200, edge_mm: 100 });
+    computeAll();
+  </script> edge_mm: 100 });
     computeAll();
   </script>
 </body>
