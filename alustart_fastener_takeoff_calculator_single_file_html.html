@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ALUSTART Fastener Take‑Off Calculator</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --panel:#111827; /* gray-900 */
+      --muted:#d1d5db; /* slate-500 */
+      --card:#0b1222; /* deep blue-ish */
+      --accent:#22d3ee; /* cyan-400 */
+      --accent-2:#14b8a6; /* teal-500 */
+      --good:#22c55e; /* green-500 */
+      --warn:#f59e0b; /* amber-500 */
+      --bad:#ef4444;  /* red-500 */
+      --text:#ffffff; /* brighter text */ /* gray-200 */
+      --soft:#cbd5e1; /* slate-300 */
+      --border:#243149;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:linear-gradient(180deg,var(--bg),#0b1020);
+      color:var(--text); font: 16px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      min-height:100vh;
+    }
+    header{
+      display:flex; gap:16px; align-items:center; justify-content:space-between;
+      padding:16px 20px; position:sticky; top:0; backdrop-filter:saturate(140%) blur(8px);
+      background:linear-gradient(90deg,#0b1020EE,#0b1222EE);
+      border-bottom:1px solid var(--border);
+      z-index:5;
+    }
+    header .brand{display:flex;align-items:center;gap:14px}
+    .brand img{height:26px; filter:invert(1) brightness(2) contrast(100%)} /* force white */
+    .brand a{color:var(--soft);text-decoration:none;font-weight:600}
+    .brand a:hover{color:white}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--border); background:#0c1630; color:var(--text);
+      padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; letter-spacing:.2px;}
+    .btn:hover{border-color:#33507a}
+    .btn.accent{background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#001014; border-color:transparent}
+    .btn.warn{background:#272107; border-color:#3e3206}
+    .btn.ghost{background:#0b1120}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px 80px}
+    .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .card{grid-column:span 12;background:linear-gradient(180deg,#0b1222,#0a1428);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .card h2{margin:0;padding:16px 16px;border-bottom:1px solid var(--border);font-size:18px;color:#f8fafc}
+    .card .content{padding:16px}
+    @media (min-width:980px){
+      .col-4{grid-column:span 4}
+      .col-6{grid-column:span 6}
+      .col-8{grid-column:span 8}
+      .col-12{grid-column:span 12}
+    }
+    .grid{display:grid;gap:12px}
+    .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+    .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+    label{font-size:11px;color:#cbd5e1;display:block;margin-bottom:6px} /* brighter labels */
+    input[type="number"], input[type="text"], select{
+      width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#0b162e; color:var(--text);
+    }
+    input[type="checkbox"]{transform:scale(1.05)}
+    table{width:100%; border-collapse:collapse; table-layout:auto;} #runs input,#runs select{font-size:15px;padding:12px 14px;min-width:160px;} #runs td:nth-child(1) input{min-width:120px;} #runs td:nth-child(2) input{min-width:120px;} #runs td:nth-child(3) select{min-width:140px;} #runs td:nth-child(4) select{min-width:170px;} #runs td:nth-child(5) select{min-width:190px;} #runs td:nth-child(6) select{min-width:200px;} #runs td:nth-child(7) input{min-width:140px;} #runs thead th{white-space:nowrap;} #runs tbody td{white-space:nowrap;} .table-wrap{overflow-x:auto;}
+    thead th{position:sticky; top:64px; background:#0b1222; border-bottom:1px solid var(--border); padding:10px; font-size:12px; color:var(--soft);}
+    tbody td{border-bottom:1px dashed #15213a; padding:6px 8px; vertical-align:middle}
+    tfoot td{padding:12px 8px; border-top:1px solid var(--border)}
+    .num{text-align:right; white-space:nowrap}
+    .pill{padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:#0b162e;}
+    .muted{color:var(--muted)}
+    .hint{font-size:14px;color:#e5e7eb}
+    .warnmsg{color:#fde68a}
+    .badmsg{color:#fecaca}
+    .goodmsg{color:#bbf7d0}
+    .footer{margin-top:12px; font-size:12px; color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi .tile{background:#0a1428;border:1px solid var(--border);border-radius:12px;padding:12px}
+    .tile .big{font-size:22px; font-weight:800}
+    .tile .lbl{font-size:12px;color:var(--muted)}
+    .tag{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:#0b162e; margin-left:6px}
+    .sr{position:absolute;left:-9999px}
+    .right{justify-self:end}
+    .del{background:#2a0f12;border-color:#551822}
+    .del:hover{border-color:#7a2433}
+  .runlist{display:grid;gap:14px}
+    .run-card{background:#0a1428;border:1px solid var(--border);border-radius:12px;padding:10px}
+    .run-card .head{display:none}
+    .run-card .title{font-weight:800;font-size:16px}
+    .run-card .grid{display:grid;gap:8px} @media(min-width:720px){ .run-card .grid{grid-template-columns:repeat(6,1fr)} } @media(min-width:1100px){ .run-card .grid{grid-template-columns:repeat(8,1fr)} }
+    @media(min-width:980px){ .run-card .grid{grid-template-columns:repeat(3,1fr)} }
+    .run-card .calc-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .badge{border:1px solid var(--border);background:#0b162e;border-radius:999px;padding:6px 12px;font-size:12px}
+  /* --- Rothoblaas top bar --- */
+    .topbar{
+      position:relative;
+      width:100%;
+      background:#0b1220;                       /* same dark header as the calculator */
+      border-bottom:1px solid rgba(148,163,184,.18);
+      padding:14px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brandlogo{ height:36px; width:auto; display:block; filter:brightness(0) invert(1); }
+    /* ^ forces the black SVG to render white on dark backgrounds */
+    .brandlogo--top{ height:36px; }
+
+    .homeLink{ display:inline-flex; align-items:center; text-decoration:none; }
+    .backlink{
+      margin-left:auto;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid #334155;
+      border-radius:9999px;
+      text-decoration:none;
+      color:#f8fafc; background:#0b1220;
+    }
+    .backlink:hover{ background:#111827; }
+
+    /* Optional sticky header */
+    .topbar{ position:sticky; top:0; z-index:1000; }
+  /* Compact mode overrides to reduce wasted space */
+    body.compact .run-card{padding:6px 8px}
+    body.compact .run-card .head{margin-bottom:6px}
+    body.compact label{font-size:11px}
+    body.compact input[type="number"], body.compact input[type="text"], body.compact select{padding:8px 10px; border-radius:8px; font-size:14px}
+    body.compact .run-card .grid{gap:8px}
+    @media(min-width:980px){ body.compact .run-card .grid{grid-template-columns:repeat(8, minmax(110px,1fr))} }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="homeLink" href="https://blaashannes.github.io/myproject/" title="Go to homepage">
+      <img class="brandlogo brandlogo--top"
+           src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg"
+           alt="Rothoblaas logo">
+    </a>
+    <a class="backlink" href="https://blaashannes.github.io/myproject/" aria-label="Back to start page">
+      ← Back to start
+    </a>
+  </div>
+  <header>
+    <div class="brand">
+      <a href="https://blaashannes.github.io/myproject/" title="Back to MyProject home" aria-label="Home">
+        <img src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg" alt="Rothoblaas logo" />
+      </a>
+      <span class="pill">ALUSTART Fastener Take‑Off</span>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="addRowBtn" title="Add a new wall run (row)">+ Add run</button>
+      <button class="btn" id="saveBtn" title="Save inputs in this browser">Save</button>
+      <button class="btn" id="loadBtn" title="Load saved inputs">Load</button>
+      <button class="btn" id="resetBtn" title="Clear all inputs">Reset</button>
+      <button class="btn" id="csvBtn" title="Export a CSV of runs and totals">Export CSV</button>
+      <button class="btn accent" id="printBtn" title="Print / PDF">Print</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="cards">
+      <section class="card col-12">
+        <h2>Project Settings</h2>
+        <div class="content grid cols-4">
+          <div>
+            <label for="job">Job / Project name</label>
+            <input id="job" type="text" placeholder="e.g., Oak Street CLT Core"/>
+          </div>
+          <div>
+            <label for="waste">Waste factor (bars)</label>
+            <input id="waste" type="number" min="0" step="0.01" value="0.05" />
+            <div class="hint">Fraction (e.g., 0.05 = 5%) applied to bar count.</div>
+          </div>
+          <div>
+            <label for="corners">90° corners <span class="muted">(JIGSTARTL)</span></label>
+            <input id="corners" type="number" min="0" step="1" value="0" />
+          </div>
+          <div>
+            <label for="tees">T‑intersections <span class="muted">(counted as ×2 JIGSTARTL)</span></label>
+            <input id="tees" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+        <div class="content">
+          <div class="grid cols-4">
+            <div>
+              <span class="lbl">Constants</span>
+              <div class="hint">Bar length <strong id="bl">7.874</strong> ft · Anchors/bar <strong id="apb">12</strong> · Jig interval <strong id="ji">2.297</strong> ft · 304.8 mm/ft</div>
+            </div>
+            <div>
+              <label><input id="capHoles" type="checkbox" checked /> Cap anchors to available holes per bars</label>
+              <div class="hint">Prevents spacing math from exceeding <em>12 × bars</em>.</div>
+            </div>
+            <div class="muted">
+              <div><span class="pill">Fastener patterns → density (pcs/ft)</span></div>
+              <div class="hint">TOTAL 22 · P1 11 · P2 8 · P3 6</div>
+            </div>
+            <div class="muted">
+              <div><span class="pill">Fasteners</span></div>
+              <div class="hint">Timber side: LBA nails Ø0.16" or LBS screws Ø0.20"</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Fastener Pattern Guide</h2>
+        <div class="content">
+          <div class="grid cols-2">
+            <div>
+              <img src="https://github.com/blaashannes/myproject/blob/main/images/ALUSTART%20Nail%20Pattern.png?raw=true" alt="ALUSTART fastener pattern guide" style="max-width:100%;border-radius:12px;border:1px solid var(--border)"/>
+            </div>
+            <div class="hint" style="font-size:14px;color:#e2e8f0">
+              <p><strong>Fastener pattern</strong> controls how many timber‑side fasteners (LBA nails or LBS screws) are used per foot along the ALUSTART profile:</p>
+              <ul>
+                <li><strong>TOTAL</strong> – every hole (≈ 22 pcs/ft)</li>
+                <li><strong>Pattern 1 (P1)</strong> – every 2nd hole (≈ 11 pcs/ft)</li>
+                <li><strong>Pattern 2 (P2)</strong> – every 3rd hole (≈ 8 pcs/ft)</li>
+                <li><strong>Pattern 3 (P3)</strong> – every 4th hole (≈ 6 pcs/ft)</li>
+              </ul>
+              <p class="muted">Note: For solid timber/glulam (C/GL) under F2/3 shear, avoid the TOTAL pattern.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Wall Runs</h2>
+        <div class="content">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px">
+            <div class="hint">One card per straight wall segment. Anchor spacing uses <strong>hole multiples</strong> (200 mm).</div>
+            <button class="btn ghost" id="toggleCompact" title="Toggle compact layout">Compact layout</button>
+          </div>
+          <div id="runlist" class="runlist"></div>
+          <div class="footer" style="margin-top:12px">
+            <div class="kpi">
+              <div class="tile"><div class="lbl">Total timber fasteners</div><div class="big" id="totTimber">0</div></div>
+              <div class="tile"><div class="lbl">Total anchors</div><div class="big" id="totAnch">0</div></div>
+              <div class="tile"><div class="lbl">Validation</div><div class="big" style="font-size:14px" id="validation">—</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Results</h2>
+        <div class="content">
+          <div class="kpi">
+            <div class="tile">
+              <div class="lbl">Total perimeter length</div>
+              <div class="big" id="k_total_len">0.000 ft</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">ALUSTART bars (with waste)</div>
+              <div class="big" id="k_bars">0</div>
+              <div class="hint">Bar length 7.874 ft</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">Anchors (to concrete)</div>
+              <div class="big" id="k_anchors">0</div>
+              <div class="hint">Capped by available holes if selected</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">Membrane under profile</div>
+              <div class="big" id="k_membrane">0.000 ft</div>
+            </div>
+          </div>
+          <div class="grid cols-4" style="margin-top:12px">
+            <div class="tile">
+              <div class="lbl">Timber fasteners (LBA nails)</div>
+              <div class="big" id="k_lba">0</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">Timber fasteners (LBS screws)</div>
+              <div class="big" id="k_lbs">0</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">JIGSTARTI (linear)</div>
+              <div class="big" id="k_jigi">0</div>
+              <div class="hint">≈ every 2.297 ft</div>
+            </div>
+            <div class="tile">
+              <div class="lbl">JIGSTARTL (corners & T)</div>
+              <div class="big" id="k_jigl">0</div>
+              <div class="hint">Corners + 2 × T‑intersections</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card col-12">
+        <h2>Notes</h2>
+        <div class="content">
+          <ul class="hint">
+            <li>Per‑ft nailing densities: TOTAL 22; PATTERN 1 = 11; PATTERN 2 = 8; PATTERN 3 = 6.</li>
+            <li>Anchors per run: <em>1 + floor((run_mm − 2 × edge_mm) / spacing_mm)</em>, min 0.</li>
+            <li>For C/GL (solid/glulam) under F2/3 shear, avoid the TOTAL pattern. The calculator flags this.
+            </li>
+            <li>Resin for chemical anchors is not computed here; use your anchor system’s volume tables.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ======== Constants ========
+    const BAR_LENGTH_FT = 7.874; // 2400 mm
+    const ANCHORS_PER_BAR = 12;
+    const JIG_INTERVAL_FT = 2.297; // JIGSTARTI typical spacing
+    const MM_PER_FT = 304.8;
+
+    // Pattern densities (pcs/ft)
+    const DENSITY = {
+      "TOTAL": 22,
+      "PATTERN 1": 11,
+      "PATTERN 2": 8,
+      "PATTERN 3": 6
+    };
+
+    // Panel types
+    const PANEL_TYPES = ["CLT","C/GL","Timber Frame"]; // C/GL = Solid/Glulam
+    const FASTENER_TYPES = ["LBA nails","LBS screws"]; // Timber-side fasteners
+    const PATTERNS = Object.keys(DENSITY);
+
+    // ======== DOM helpers ========
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    // ======== Row management ========
+    const runlist = document.querySelector('#runlist');
+
+    function newRowData(i){
+      return {
+        name: `Run ${i+1}`,
+        length_ft: 10,
+        panel: "CLT",
+        fastener: "LBA nails",
+        pattern: "TOTAL",
+        spacing_mm: 200,
+        edge_mm: 100
+      };
+    }
+
+    function addRow(prefill){
+      const i = runlist.children.length;
+      const data = prefill || newRowData(i);
+      const card = document.createElement('div');
+      card.className = 'run-card';
+      card.innerHTML = `
+        <div class="grid">
+          <div>
+            <label>Run name</label>
+            <input data-field="name" type="text" value="${data.name}" aria-label="run name">
+          </div>
+          <div>
+            <label>Length (ft)</label>
+            <input data-field="length_ft" type="number" min="0" step="0.001" value="${data.length_ft}">
+          </div>
+          <div>
+            <label>Panel</label>
+            <select data-field="panel">${PANEL_TYPES.map(p=>`<option ${p===data.panel?'selected':''}>${p}</option>`).join('')}</select>
+          </div>
+          <div>
+            <label>Fastener</label>
+            <select data-field="fastener">${FASTENER_TYPES.map(f=>`<option ${f===data.fastener?'selected':''}>${f}</option>`).join('')}</select>
+          </div>
+          <div>
+            <label>Fastener pattern</label>
+            <select data-field="pattern">${PATTERNS.map(p=>`<option ${p===data.pattern?'selected':''}>${p}</option>`).join('')}</select>
+          </div>
+          <div>
+            <label>Anchor spacing</label>
+            <select data-field="spacing_mm">
+              <option value="200" ${data.spacing_mm===200?'selected':''}>Every hole (200mm)</option>
+              <option value="400" ${data.spacing_mm===400?'selected':''}>2nd hole (400mm)</option>
+              <option value="600" ${data.spacing_mm===600?'selected':''}>3rd hole (600mm)</option>
+              <option value="800" ${data.spacing_mm===800?'selected':''}>4th hole (800mm)</option>
+              <option value="1000" ${data.spacing_mm===1000?'selected':''}>5th hole (1000mm)</option>
+              <option value="1200" ${data.spacing_mm===1200?'selected':''}>6th hole (1200mm)</option>
+            </select>
+          </div>
+          <div>
+            <label>Edge setback (mm)</label>
+            <input data-field="edge_mm" type="number" min="0" step="1" value="${data.edge_mm}">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn del" title="Delete run">Delete</button>
+          </div>
+          <div class="calc-badges" style="grid-column:1/-1">
+            <span class="badge">Timber fasteners: <strong data-cell="timber">0</strong></span>
+            <span class="badge">Anchors: <strong data-cell="anchors">0</strong></span>
+          </div>
+        </div>
+      `;
+      runlist.appendChild(card);
+      card.addEventListener('input', computeAll);
+      card.querySelector('.del').addEventListener('click', ()=>{ card.remove(); computeAll(); });
+      computeAll();
+    }
+
+    // ======== Math helpers ========
+    const toNumber = v => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const ceil = Math.ceil; const floor = Math.floor; const max = Math.max; const min = Math.min;
+    function roundup(n){ return Math.ceil(n); }
+
+    // Anchors for a run: 1 + floor((L_mm - 2E)/S), min 0
+    function anchorsPerRun(length_ft, spacing_mm, edge_mm){
+      const Lmm = length_ft * MM_PER_FT;
+      const usable = Lmm - 2*edge_mm;
+      if (usable < 0) return 0;
+      return max(0, 1 + floor( usable / spacing_mm ));
+    }
+
+    // Timber fasteners per run = roundup(length_ft * density)
+    function timberPerRun(length_ft, pattern){
+      const d = DENSITY[pattern] || 0;
+      return roundup(length_ft * d);
+    }
+
+    // ======== Compute ========
+    function computeAll(){
+      let totalLen = 0;
+      let totalAnch = 0;
+      let totalTimber = 0;
+      let totalLBA = 0;
+      let totalLBS = 0;
+      let warnings = [];
+
+      // Per-row calculations
+      $$('.run-card').forEach(tr =>{
+        const nameI = tr.querySelector('[data-field="name"]');
+        const lenI = tr.querySelector('[data-field="length_ft"]');
+        const panelS = tr.querySelector('[data-field="panel"]');
+        const fastenerS = tr.querySelector('[data-field="fastener"]');
+        const patternS = tr.querySelector('[data-field="pattern"]');
+        const spaceI = tr.querySelector('[data-field="spacing_mm"]');
+        const edgeI = tr.querySelector('[data-field="edge_mm"]');
+        const L = toNumber(lenI.value);
+        const panel = panelS.value;
+        const fastener = fastenerS.value;
+        const pattern = patternS.value;
+        const spacing = toNumber(spaceI.value);
+        const edge = toNumber(edgeI.value);
+
+        const timber = timberPerRun(L, pattern);
+        const anchors = anchorsPerRun(L, spacing, edge);
+
+        tr.querySelector('[data-cell="timber"]').textContent = timber.toLocaleString();
+        tr.querySelector('[data-cell="anchors"]').textContent = anchors.toLocaleString();
+
+        totalLen += L;
+        totalAnch += anchors;
+        totalTimber += timber;
+
+        if (fastener === 'LBA nails') totalLBA += timber; else totalLBS += timber;
+
+        // Validation rules
+        if (panel === 'C/GL' && pattern === 'TOTAL') {
+          warnings.push(`${nameI.value || 'Run'}: Avoid TOTAL pattern for C/GL under shear.`);
+        }
+        if (panel === 'C/GL' && fastener === 'LBS screws'){
+          warnings.push(`${nameI.value || 'Run'}: LBS screws specified for CLT; check edge distances for C/GL.`);
+        }
+      });
+
+      // Bars with waste
+      const waste = toNumber($('#waste').value || 0);
+      const barsRaw = (totalLen / BAR_LENGTH_FT) * (1 + waste);
+      const bars = ceil(barsRaw);
+
+      // Cap anchors to available holes if needed
+      let anchors = totalAnch;
+      if ($('#capHoles').checked){
+        anchors = min(anchors, bars * ANCHORS_PER_BAR);
+      }
+
+      // KPIs
+      $('#k_total_len').textContent = `${totalLen.toFixed(3)} ft`;
+      $('#k_bars').textContent = bars.toLocaleString();
+      $('#k_anchors').textContent = anchors.toLocaleString();
+      $('#k_membrane').textContent = `${totalLen.toFixed(3)} ft`;
+      $('#k_lba').textContent = totalLBA.toLocaleString();
+      $('#k_lbs').textContent = totalLBS.toLocaleString();
+      $('#k_jigi').textContent = ceil(totalLen / JIG_INTERVAL_FT).toLocaleString();
+
+      const corners = toNumber($('#corners').value);
+      const tees = toNumber($('#tees').value);
+      $('#k_jigl').textContent = (corners + 2*tees).toLocaleString();
+
+      // Table totals
+      $('#totTimber').textContent = totalTimber.toLocaleString();
+      $('#totAnch').textContent = anchors.toLocaleString();
+
+      // Validation output
+      $('#validation').textContent = warnings.join('  •  ');
+    }
+
+    // ======== Save/Load/Reset/CSV/Print ========
+    function serialize(){
+      const rows = $$('.run-card').map(tr =>{
+        const nameI = tr.querySelector('input[type="text"]');
+        const lenI = tr.querySelector('[data-field="length_ft"]');
+        const panelS = tr.querySelector('[data-field="panel"]');
+        const fastenerS = tr.querySelector('[data-field="fastener"]');
+        const patternS = tr.querySelector('[data-field="pattern"]');
+        const spaceI = tr.querySelector('[data-field="spacing_mm"]');
+        const edgeI = tr.querySelector('[data-field="edge_mm"]');
+        return {
+          name: nameI.value,
+          length_ft: toNumber(lenI.value),
+          panel: panelS.value,
+          fastener: fastenerS.value,
+          pattern: patternS.value,
+          spacing_mm: toNumber(spaceI.value),
+          edge_mm: toNumber(edgeI.value)
+        };
+      });
+      return {
+        meta: {
+          job: $('#job').value,
+          waste: toNumber($('#waste').value),
+          corners: toNumber($('#corners').value),
+          tees: toNumber($('#tees').value),
+          capHoles: $('#capHoles').checked
+        },
+        rows
+      };
+    }
+
+    function deserialize(state){
+      if (!state) return;
+      $('#job').value = state.meta?.job || '';
+      $('#waste').value = state.meta?.waste ?? 0.05;
+      $('#corners').value = state.meta?.corners ?? 0;
+      $('#tees').value = state.meta?.tees ?? 0;
+      $('#capHoles').checked = !!state.meta?.capHoles;
+
+      runlist.innerHTML = '';
+      (state.rows || []).forEach(r=> addRow(r));
+      if ((state.rows || []).length === 0) addRow();
+      computeAll();
+    }
+
+    function save(){
+      const data = serialize();
+      localStorage.setItem('alustart_calc_v1', JSON.stringify(data));
+      alert('Saved in this browser.');
+    }
+
+    function load(){
+      const raw = localStorage.getItem('alustart_calc_v1');
+      if (!raw){ alert('No saved data found.'); return; }
+      try{ deserialize(JSON.parse(raw)); } catch(e){ alert('Could not load saved data.'); }
+    }
+
+    function resetAll(){
+      if(!confirm('Clear all inputs?')) return;
+      $('#job').value = '';
+      $('#waste').value = 0.05;
+      $('#corners').value = 0;
+      $('#tees').value = 0;
+      $('#capHoles').checked = true;
+      runlist.innerHTML = '';
+      addRow();
+      computeAll();
+    }
+
+    function exportCSV(){
+      // Build CSV with rows and totals
+      computeAll();
+      const state = serialize();
+      let csv = '';
+      csv += 'Job,'+ (state.meta.job||'') +"\n";
+      csv += `Waste Factor,${state.meta.waste}\n`;
+      csv += `Corners,${state.meta.corners}\n`;
+      csv += `T-Intersections,${state.meta.tees}\n`;
+      csv += `Cap Anchors To Holes,${state.meta.capHoles}\n`;
+      csv += '\n';
+      csv += 'Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors\n';
+
+      // We need displayed computed cells, so recompute per row here
+      let totalLen=0, totalTimber=0, totalAnch=0, totalLBA=0, totalLBS=0;
+      state.rows.forEach(r=>{
+        const timber = timberPerRun(r.length_ft, r.pattern);
+        const anchors = anchorsPerRun(r.length_ft, r.spacing_mm, r.edge_mm);
+        csv += `${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}\n`;
+        totalLen += r.length_ft; totalTimber += timber; totalAnch += anchors;
+        if (r.fastener==='LBA nails') totalLBA += timber; else totalLBS += timber;
+      });
+      const bars = ceil((totalLen/BAR_LENGTH_FT)*(1+state.meta.waste));
+      let anchors = totalAnch;
+      if (state.meta.capHoles) anchors = Math.min(anchors, bars*ANCHORS_PER_BAR);
+
+      csv += '\nTotals,,,,,,,'+totalTimber+','+anchors+'\n';
+      csv += `Total Length ft,${totalLen}\n`;
+      csv += `Bars,${bars}\n`;
+      csv += `Anchors (final),${anchors}\n`;
+      csv += `Membrane ft,${totalLen}\n`;
+      csv += `JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}\n`;
+      csv += `JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}\n`;
+      csv += `LBA Nails,${totalLBA}\n`;
+      csv += `LBS Screws,${totalLBS}\n`;
+
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:T]/g,'-').split('.')[0];
+      a.href = url; a.download = `ALUSTART_takeoff_${ts}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ======== Wiring ========
+    // Compact mode toggle
+    const COMPACT_KEY = 'alustart_compact';
+    const toggleBtnInit = () => {
+      const btn = document.querySelector('#toggleCompact');
+      if (!btn) return;
+      const apply = (on) => { document.body.classList.toggle('compact', on); btn.textContent = on ? 'Compact layout: ON' : 'Compact layout: OFF'; };
+      const saved = localStorage.getItem(COMPACT_KEY);
+      apply(saved !== '0'); // default ON if null
+      btn.addEventListener('click', ()=>{ const now = !document.body.classList.contains('compact'); apply(now); localStorage.setItem(COMPACT_KEY, now? '1':'0'); });
+    };
+    document.addEventListener('DOMContentLoaded', toggleBtnInit);
+    $('#addRowBtn').addEventListener('click', ()=> addRow());
+    $('#saveBtn').addEventListener('click', save);
+    $('#loadBtn').addEventListener('click', load);
+    $('#resetBtn').addEventListener('click', resetAll);
+    $('#csvBtn').addEventListener('click', exportCSV);
+    $('#printBtn').addEventListener('click', ()=> window.print());
+
+    $('#job, #waste, #corners, #tees, #capHoles').addEventListener('input', computeAll);
+
+    // Show constants in UI
+    $('#bl').textContent = BAR_LENGTH_FT.toFixed(3);
+    $('#apb').textContent = ANCHORS_PER_BAR;
+    $('#ji').textContent = JIG_INTERVAL_FT.toFixed(3);
+
+    // Startup
+    addRow({ name: 'Run 1', length_ft: 20, panel: 'CLT', fastener: 'LBA nails', pattern: 'TOTAL', spacing_mm: 200, edge_mm: 100 });
+    computeAll();
+  </script>
+</body>
+</html>
