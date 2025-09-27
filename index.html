@@ -2,26 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deck Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyProject Online — Rothoblaas</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--rb-gray:#6b7280;--rb-card:#131722;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0f1115 0%,#0b0d12 100%);color:#e5e7eb}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    header{position:sticky;top:0;z-index:40;background:rgba(15,17,21,.6);backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo{height:36px;display:block}
+    .section{padding:50px 0}
+    h1{margin:0 0 8px}
+    .meta{color:#6b7280}
+    .cards{display:grid;gap:18px;grid-template-columns:repeat(4,1fr)}
+    @media (max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:820px){.cards{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.cards{grid-template-columns:1fr}}
+    .card{background:var(--rb-card);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:22px}
+    .tile{display:block;transition:transform .08s ease, box-shadow .2s ease}
+    .tile:hover{transform:translateY(-2px);box-shadow:0 18px 40px -22px rgba(0,0,0,.7)}
+    .tile img{display:block;width:100%;border-radius:12px;margin-bottom:12px;aspect-ratio:1/1;object-fit:cover}
+  </style>
 </head>
 <body>
-  <div id="root"></div>
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand" aria-label="Rothoblaas home">
+        <img src="https://www.rothoblaas.com/assets/images/rothoblaas-logo.svg" alt="Rothoblaas" class="logo"/>
+      </a>
+    </div>
+  </header>
 
-  <!-- React + ReactDOM (UMD builds) -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-
-  <!-- Babel to transpile JSX in the browser (dev/demo only) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Your JSX component file -->
-  <script type="text/babel" data-presets="react" src="./deck-calculator.jsx"></script>
-
-  <!-- Mount it -->
-  <script type="text/babel" data-presets="react">
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<DeckCalculator />);
-  </script>
+  <main>
+    <section class="section">
+      <div class="container">
+        <h1>Choose a calculator</h1>
+        <p class="meta">Select a module to start a calculation.</p>
+        <div class="cards">
+          <a class="card tile" href="https://blaashannes.github.io/myproject/thermowasher_calculator_client_facing.html">
+            <img src="https://www.rothoblaas.com/images/thermowasher-app-2-1558076850.jpg?w=1080&h=1080" alt="Insulation fastening"/>
+            <h3>Insulation Fastening</h3>
+            <p class="meta">Fastener selection & washer checks for insulation boards.</p>
+          </a>
+          <a class="card tile" href="#deck">
+            <img src="https://www.rothoblaas.com/images/TERRALOCK_RA2_web-1757919913.jpg" alt="Deck hardware calculator"/>
+            <h3>Deck Hardware</h3>
+            <p class="meta">Fastening solutions for decks and outdoor structures.</p>
+          </a>
+          <a class="card tile" href="https://blaashannes.github.io/myproject/alustart_fastener_takeoff_calculator_single_file_html.html">
+            <img src="https://www.rothoblaas.com/images/applicazione-sistema-in-alluminio-per-attacco-a-terra-degli-edifici-alu-start_RA3-1715612235.jpg?w=1080&h=1080" alt="ALUSTART"/>
+            <h3>ALUSTART</h3>
+            <p class="meta">Aluminum base system fastening calculator.</p>
+          </a>
+          <a class="card tile" href="#plates">
+            <img src="https://www.rothoblaas.com/images/applicazione-angolare-per-forze-di-taglio-e-trazione-titan-v_RA1-1715670158.jpg?w=1080&h=1080" alt="Plates & angles"/>
+            <h3>Plates & angles</h3>
+            <p class="meta">Brackets & perforated plates.</p>
+          </a>
+          <a class="card tile" href="#holddowns">
+            <img src="https://www.rothoblaas.com/images/applicazione-angolare%20-per-forze-di-trazione-wht_RA2-1715869085.jpg?w=1080&h=1080" alt="Hold‑downs & anchors"/>
+            <h3>Hold‑downs & anchors</h3>
+            <p class="meta">Uplift & shear for walls.</p>
+          </a>
+          <a class="card tile" href="#timbersteel">
+            <img src="https://www.rothoblaas.com/images/HBS_P_RA1_new_800x600-1693833829.jpg?w=1080&h=1080" alt="Timber–steel"/>
+            <h3>Timber–steel</h3>
+            <p class="meta">Hybrid interfaces & retrofits.</p>
+          </a>
+          <a class="card tile" href="#timberconcrete">
+            <img src="https://www.rothoblaas.com/images/CTC_RA1_800x600-1693905575.jpg?w=1080&h=1080" alt="Timber–concrete"/>
+            <h3>Timber–concrete</h3>
+            <p class="meta">Interface checks & anchors.</p>
+          </a>
+          <a class="card tile" href="#shearwalls">
+            <img src="https://www.rothoblaas.com/images/applicazione-connettore-per-pannelli-strutturali-slot-RA2-1715692029.jpg?w=1080&h=1080" alt="Shear walls & diaphragms"/>
+            <h3>Shear walls & diaphragms</h3>
+            <p class="meta">Lateral elements with connectors.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
