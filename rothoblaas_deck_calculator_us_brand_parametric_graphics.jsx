@@ -1,12 +1,103 @@
 /**
  * Rothoblaas — TERRALOCK Fastener Takeoff (UMD+Babel, compact)
- * - Sketch drawer: grid snap (6/12/24/36/48 in), click to add, hold‑drag to move, right‑click to delete,
+ *
+ * This revision restores the intended visual design **without Tailwind** by shipping a tiny
+ * CSS bridge that recreates only the utility classes we use. It fixes the broken layout
+ * on GitHub Pages where Tailwind isn't loaded.
+ *
+ * - Sketch drawer: grid snap (6/12/24/36/48 in), click to add, hold‑drag to move, right‑click delete,
  *   click a line to insert a midpoint (keeps order), click a length label to edit that segment in feet.
  * - US construction wording; boards always run ⟂ to joists; joist 90° toggle.
  * - Inputs: L (board width, in), f (gap, in), i (joist spacing, on‑center, in), waste factor.
  * - Outputs: board rows across, joist count, TERRALOCK clip count (± waste), area.
- * - UMD+Babel friendly (no imports/exports). Exposes `window.DeckCalculator` and **auto‑mounts safely** if possible.
+ * - UMD+Babel friendly (no imports/exports). Exposes `window.DeckCalculator` and can auto‑mount.
  */
+
+/*********** Minimal CSS bridge (no Tailwind needed) ***********/
+function GlobalStyles(){
+  return (
+    <style>{`
+/* layout */
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif;}
+.min-h-screen{min-height:100vh}
+.mx-auto{margin-left:auto;margin-right:auto}
+.max-w-6xl{max-width:72rem}
+.px-4{padding-left:1rem;padding-right:1rem}
+.pb-20{padding-bottom:5rem}
+.space-y-10 > * + *{margin-top:2.5rem}
+
+/* cards & borders */
+.bg-white{background:#fff}
+.bg-neutral-50{background:#fafafa}
+.border{border-width:1px}
+.border-neutral-200{border-color:#e5e7eb}
+.rounded-xl{border-radius:0.75rem}
+.shadow-sm{box-shadow:0 1px 2px rgba(0,0,0,.05)}
+
+/* text */
+.text-neutral-900{color:#111827}
+.text-neutral-700{color:#374151}
+.text-neutral-600{color:#525252}
+.text-neutral-500{color:#6b7280}
+.text-xs{font-size:.75rem;line-height:1rem}
+.text-sm{font-size:.875rem;line-height:1.25rem}
+.text-lg{font-size:1.125rem;line-height:1.75rem}
+.text-xl{font-size:1.25rem;line-height:1.75rem}
+.font-extrabold{font-weight:800}
+.font-semibold{font-weight:600}
+.tracking-tight{letter-spacing:-0.01em}
+.text-10{font-size:10px;line-height:12px}
+.tabular-nums{font-variant-numeric:tabular-nums}
+
+/* flex & spacing */
+.flex{display:flex}
+.flex-wrap{flex-wrap:wrap}
+.items-center{align-items:center}
+.gap-3{gap:.75rem}
+.mb-2{margin-bottom:.5rem}
+.mt-1{margin-top:.25rem}
+.mt-3{margin-top:.75rem}
+.mt-4{margin-top:1rem}
+.grid{display:grid}
+.gap-3{gap:.75rem}
+.sm\\:grid-cols-4{grid-template-columns:repeat(1,minmax(0,1fr))}
+.sm\\:grid-cols-5{grid-template-columns:repeat(1,minmax(0,1fr))}
+.sm\\:grid-cols-3{grid-template-columns:repeat(1,minmax(0,1fr))}
+@media(min-width:640px){
+  .sm\\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sm\\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .sm\\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* inputs */
+.rounded{border-radius:.25rem}
+.px-2{padding-left:.5rem;padding-right:.5rem}
+.px-3{padding-left:.75rem;padding-right:.75rem}
+.py-1{padding-top:.25rem;padding-bottom:.25rem}
+.py-2{padding-top:.5rem;padding-bottom:.5rem}
+.w-full{width:100%}
+.focus\\:ring-2:focus{outline:2px solid rgba(0,0,0,.1)}
+
+/* svg & utility */
+.select-none{user-select:none}
+.w-full{width:100%}
+.h-260{height:260px}
+.md\\:h-400{height:260px}
+@media(min-width:768px){.md\\:h-400{height:400px}}
+.fill-emerald-50{fill:#ecfdf5}
+.fill-emerald-500{fill:#10b981}
+.fill-emerald-600{fill:#059669}
+.fill-amber-200-70{fill:rgba(253,230,138,.7)}
+.fill-neutral-400{fill:#9ca3af}
+.fill-neutral-600{fill:#525252}
+.stroke-black{stroke:#111827}
+.stroke-neutral-200{stroke:#e5e7eb}
+.stroke-neutral-700{stroke:#374151}
+.stroke-emerald-500{stroke:#10b981}
+.rounded-2xl{border-radius:1rem}
+`}</style>
+  );
+}
 
 // ===== Helpers =====
 const inToFt = (i) => i / 12;
@@ -21,7 +112,6 @@ const adjustSegmentLength = (a, b, L) => { const dx = b.x - a.x, dy = b.y - a.y;
 
 // ===== Branding TopBar =====
 function TopBar() {
-  // single wrapper avoids any fragment/adjacency parsing issues
   return (
     <div>
       <style>{`.topbar{position:sticky;top:0;z-index:1000;width:100%;background:#0b1220;border-bottom:1px solid rgba(148,163,184,.18);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brandlogo{height:36px;filter:brightness(0) invert(1)}.backlink{margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #334155;border-radius:9999px;color:#f8fafc;background:#0b1220}.backlink:hover{background:#111827}`}</style>
@@ -38,7 +128,7 @@ function renderGrid(PAD, maxW, maxH, stepPx = 24, label = "") {
   const L = [];
   for (let x = PAD; x < maxW - PAD + 1; x += stepPx) L.push(<line key={`gx${x}`} x1={x} y1={PAD} x2={x} y2={maxH - PAD} className="stroke-neutral-200" strokeWidth={1} />);
   for (let y = PAD; y < maxH - PAD + 1; y += stepPx) L.push(<line key={`gy${y}`} x1={PAD} y1={y} x2={maxW - PAD} y2={y} className="stroke-neutral-200" strokeWidth={1} />);
-  if (label) L.push(<text key="gridnote" x={maxW - PAD} y={maxH - 6} textAnchor="end" className="text-[10px] fill-neutral-400">Grid tile = {label}</text>);
+  if (label) L.push(<text key="gridnote" x={maxW - PAD} y={maxH - 6} textAnchor="end" className="text-10 fill-neutral-400">Grid tile = {label}</text>);
   return <g>{L}</g>;
 }
 
@@ -113,7 +203,7 @@ function DeckSketcher({ points, setPoints }) {
       if (i === points.length - 1 && points.length < 3) break; // don't draw closing edge for open polyline
       const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, mp = toPx(mid), L = Math.hypot(b.x - a.x, b.y - a.y);
       segLabels.push(
-        <text key={`len-${i}`} x={mp.x} y={mp.y - 6} textAnchor="middle" className="cursor-pointer select-none text-[10px] fill-neutral-700"
+        <text key={`len-${i}`} x={mp.x} y={mp.y - 6} textAnchor="middle" className="cursor-pointer select-none text-10 fill-neutral-700"
               onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); openEdit(i, { x: mp.x, y: mp.y - 24 }); }}>{round(L, 2)}'</text>
       );
       const ap = toPx(a), bp = toPx(b);
@@ -139,7 +229,7 @@ function DeckSketcher({ points, setPoints }) {
         <span className="text-xs text-neutral-500">Grid tile = <b>{label}</b>. Click to add • hold to drag • right‑click delete • click a line to insert midpoint • click length label to edit.</span>
         <button onClick={() => setPoints([])} className="rounded px-3 py-1 border">Clear</button>
       </div>
-      <svg viewBox={`0 0 ${maxW} ${maxH}`} className="w-full h-[260px] md:h-[400px] bg-white border border-neutral-200 rounded-xl select-none"
+      <svg viewBox={`0 0 ${maxW} ${maxH}`} className="w-full h-260 md:h-400 bg-white border border-neutral-200 rounded-xl select-none"
            onMouseMove={onMove} onMouseUp={end} onMouseLeave={end} onClick={onCanvasClick}
            onContextMenu={(e) => { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); delNear(e.clientX, e.clientY, r); }}>
         {renderGrid(PAD, maxW, maxH, stepPx, label)}
@@ -148,7 +238,7 @@ function DeckSketcher({ points, setPoints }) {
         {points.map((p, i) => { const { x, y } = toPx(p); return (
           <g key={i} onMouseDown={onDown(i)}>
             <circle cx={x} cy={y} r={6} className={i === sel ? "fill-emerald-600" : "fill-emerald-500"} />
-            <text x={x + 8} y={y - 8} className="text-[10px] fill-neutral-600">{i + 1}</text>
+            <text x={x + 8} y={y - 8} className="text-10 fill-neutral-600">{i + 1}</text>
           </g>
         ); })}
         {segLabels}
@@ -207,17 +297,17 @@ function DeckCalculator() {
     const stripes = []; const mFt = inToFt(moduleIn); const cnt = Math.max(1, boardsAcross);
     for (let k = 0; k < cnt; k++) {
       const off = k * mFt;
-      if (boardsParallelToB) { const y = PAD + off * s; stripes.push(<rect key={`s-${k}`} x={PAD} y={y} width={bounds.w * s} height={inToFt(L) * s} className="fill-amber-200/70" />); }
-      else { const x = PAD + off * s; stripes.push(<rect key={`s-${k}`} x={x} y={PAD} width={inToFt(L) * s} height={bounds.h * s} className="fill-amber-200/70" />); }
+      if (boardsParallelToB) { const y = PAD + off * s; stripes.push(<rect key={`s-${k}`} x={PAD} y={y} width={bounds.w * s} height={inToFt(L) * s} className="fill-amber-200-70" />); }
+      else { const x = PAD + off * s; stripes.push(<rect key={`s-${k}`} x={x} y={PAD} width={inToFt(L) * s} height={bounds.h * s} className="fill-amber-200-70" />); }
     }
 
     const jo = []; const n = joistCount;
     for (let j = 0; j < n; j++) {
       const off = inToFt(iOC) * j;
-      if (!rot) { // joists horizontal when not rotated
+      if (!rot) {
         if (boardsParallelToB) { const y = PAD + off * s; jo.push(<line key={`j-${j}`} x1={PAD} y1={y} x2={PAD + bounds.w * s} y2={y} className="stroke-neutral-700" strokeWidth={1} />); }
         else { const x = PAD + off * s; jo.push(<line key={`j-${j}`} x1={x} y1={PAD} x2={x} y2={PAD + bounds.h * s} className="stroke-neutral-700" strokeWidth={1} />); }
-      } else { // rotated 90°
+      } else {
         if (boardsParallelToB) { const x = PAD + off * s; jo.push(<line key={`j-${j}`} x1={x} y1={PAD} x2={x} y2={PAD + bounds.h * s} className="stroke-neutral-700" strokeWidth={1} />); }
         else { const y = PAD + off * s; jo.push(<line key={`j-${j}`} x1={PAD} y1={y} x2={PAD + bounds.w * s} y2={y} className="stroke-neutral-700" strokeWidth={1} />); }
       }
@@ -228,8 +318,8 @@ function DeckCalculator() {
         <defs><clipPath id="clip"><path d={d} /></clipPath></defs>
         <path d={d} className="fill-white stroke-black" strokeWidth={2} />
         <g clipPath="url(#clip)">{[...stripes, ...jo]}</g>
-        <text x={PAD + (bounds.w * s) / 2} y={PAD - 8} textAnchor="middle" className="text-[12px]">B = {fmtFt(B)}</text>
-        <text x={PAD - 8} y={PAD + (bounds.h * s) / 2} textAnchor="end" dominantBaseline="middle" className="text-[12px]">H = {fmtFt(H)}</text>
+        <text x={PAD + (bounds.w * s) / 2} y={PAD - 8} textAnchor="middle" className="text-sm">B = {fmtFt(B)}</text>
+        <text x={PAD - 8} y={PAD + (bounds.h * s) / 2} textAnchor="end" dominantBaseline="middle" className="text-sm">H = {fmtFt(H)}</text>
       </svg>
     );
   }, [sketchPts, B, H, L, f, moduleIn, boardsAcross, iOC, joistCount, rot, boardsParallelToB]);
@@ -248,6 +338,7 @@ function DeckCalculator() {
 
   return (
     <div className="min-h-screen bg-white text-neutral-900">
+      <GlobalStyles />
       <TopBar />
       <main className="max-w-6xl mx-auto px-4 pb-20 space-y-10">
         <Section title="0. DRAW YOUR DECK (Sketch Tool)">
@@ -309,27 +400,23 @@ const NumInput = ({ label, value, setValue, step = 1 }) => (
   <label className="block">
     <span className="text-xs text-neutral-600">{label}</span>
     <input type="number" value={Number.isFinite(value) ? value : ''} step={step} onChange={(e) => setValue(e.target.valueAsNumber)}
-           className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10" />
+           className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:ring-2" />
   </label>
 );
 
 // ===== Expose for UMD+Babel =====
 window.DeckCalculator = DeckCalculator;
 
-// Optional safe auto‑mount (prevents common #130 by ensuring we create a React element)
+// Optional safe auto‑mount
 (function tryAutoMount(){
   try {
-    if (!window || !window.React || !window.ReactDOM) return; // require UMDs
+    if (!window || !window.React || !window.ReactDOM) return;
     const host = document.getElementById('root');
     if (!host || host.__rbMounted) return;
-    // If a previous script already mounted, skip.
     host.__rbMounted = true;
     const root = window.ReactDOM.createRoot(host);
     root.render(React.createElement(window.DeckCalculator));
-  } catch (e) {
-    // swallow — only a convenience path
-  }
+  } catch (e) {}
 })();
 
-// Sanity: ensure global export type
 try { console.assert(typeof window.DeckCalculator === 'function', 'DeckCalculator must be a function'); } catch (_) {}
