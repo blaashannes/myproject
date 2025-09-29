@@ -63,7 +63,7 @@
       width:100%; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#0b162e; color:var(--text);
     }
     input[type="checkbox"]{transform:scale(1.05)}
-    table{width:100%; border-collapse:collapse; table-layout:auto;} #runs input,#runs select{font-size:15px;padding:12px 14px;min-width:160px;} #runs td:nth-child(1) input{min-width:120px;} #runs td:nth-child(2) input{min-width:120px;} #runs td:nth-child(3) select{min-width:140px;} #runs td:nth-child(4) select{min-width:170px;} #runs td:nth-child(5) select{min-width:190px;} #runs td:nth-child(6) select{min-width:200px;} #runs td:nth-child(7) input{min-width:140px;} #runs thead th{white-space:nowrap;} #runs tbody td{white-space:nowrap;} .table-wrap{overflow-x:auto;}
+    table{width:100%; border-collapse:collapse;}
     thead th{position:sticky; top:64px; background:#0b1222; border-bottom:1px solid var(--border); padding:10px; font-size:12px; color:var(--soft);}
     tbody td{border-bottom:1px dashed #15213a; padding:6px 8px; vertical-align:middle}
     tfoot td{padding:12px 8px; border-top:1px solid var(--border)}
@@ -84,15 +84,14 @@
     .right{justify-self:end}
     .del{background:#2a0f12;border-color:#551822}
     .del:hover{border-color:#7a2433}
-  .runlist{display:grid;gap:14px}
+    /* Cards layout for runs */
+    .runlist{display:grid;gap:14px}
     .run-card{background:#0a1428;border:1px solid var(--border);border-radius:12px;padding:10px}
-    .run-card .head{display:none}
-    .run-card .title{font-weight:800;font-size:16px}
-    .run-card .grid{display:grid;gap:8px} @media(min-width:720px){ .run-card .grid{grid-template-columns:repeat(6,1fr)} } @media(min-width:1100px){ .run-card .grid{grid-template-columns:repeat(8,1fr)} }
-    @media(min-width:980px){ .run-card .grid{grid-template-columns:repeat(3,1fr)} }
-    .run-card .calc-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .badge{border:1px solid var(--border);background:#0b162e;border-radius:999px;padding:6px 12px;font-size:12px}
-  /* --- Rothoblaas top bar --- */
+    .run-card .grid{display:grid;gap:8px}
+    @media(min-width:720px){ .run-card .grid{grid-template-columns:repeat(6,1fr)} }
+    @media(min-width:1100px){ .run-card .grid{grid-template-columns:repeat(8,1fr)} }
+
+    /* --- Rothoblaas top bar --- */
     .topbar{
       position:relative;
       width:100%;
@@ -122,14 +121,17 @@
 
     /* Optional sticky header */
     .topbar{ position:sticky; top:0; z-index:1000; }
-  /* Compact mode overrides to reduce wasted space */
+
+    /* Compact mode overrides to reduce wasted space */
     body.compact .run-card{padding:6px 8px}
     body.compact .run-card .head{margin-bottom:6px}
     body.compact label{font-size:11px}
     body.compact input[type="number"], body.compact input[type="text"], body.compact select{padding:8px 10px; border-radius:8px; font-size:14px}
     body.compact .run-card .grid{gap:8px}
     @media(min-width:980px){ body.compact .run-card .grid{grid-template-columns:repeat(8, minmax(110px,1fr))} }
-  .sku-strip{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Drag/drop SKU strip */
+    .sku-strip{display:flex;gap:8px;flex-wrap:wrap}
     .sku-pill{user-select:none; display:inline-flex; align-items:center; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#0b162e; font-size:12px; cursor:grab}
     .sku-pill:active{cursor:grabbing}
     .drop-target{outline:2px dashed var(--accent); outline-offset:2px}
@@ -201,7 +203,7 @@
             </select>
           </div>
           <div>
-            <label for="waste">Waste factor (bars)</label>>Waste factor (bars)</label>
+            <label for="waste">Waste factor (bars)</label>
             <input id="waste" type="number" min="0" step="0.01" value="0.05" />
             <div class="hint">Fraction (e.g., 0.05 = 5%) applied to bar count.</div>
           </div>
@@ -263,8 +265,6 @@
               <button class="btn ghost" id="toggleCompact" title="Toggle compact layout">Compact layout</button>
             </div>
           </div>
-            <button class="btn ghost" id="toggleCompact" title="Toggle compact layout">Compact layout</button>
-          </div>
           <div id="runlist" class="runlist"></div>
           <div class="footer" style="margin-top:12px">
             <div class="kpi">
@@ -299,7 +299,7 @@
               <div class="big" id="k_membrane">0.0 ft</div>
             </div>
           </div>
-          <div class="grid cols-4" style="margin-top:12px">
+          <div class="kpi" style="margin-top:12px">
             <div class="tile">
               <div class="lbl">Timber fasteners (LBA460 nails)</div>
               <div class="big" id="k_lba">0</div>
@@ -319,17 +319,7 @@
               <div class="hint">≈ every 2.297 ft</div>
             </div>
           </div>
-              <div class="big" id="k_lba">0</div>
-            </div>
-            <div class="tile">
-              <div class="lbl">Timber fasteners (LBS560 screws)</div>
-              <div class="big" id="k_lbs">0</div>
-            </div>
-            <div class="tile">
-              <div class="lbl">JIGSTARTI (linear)</div>
-              <div class="big" id="k_jigi">0</div>
-              <div class="hint">≈ every 2.297 ft</div>
-            </div>
+          <div class="kpi" style="margin-top:12px">
             <div class="tile">
               <div class="lbl">JIGSTARTL (corners & T)</div>
               <div class="big" id="k_jigl">0</div>
@@ -366,6 +356,18 @@
           </ul>
         </div>
       </section>
+
+      <!-- Developer test harness (collapsible) -->
+      <section class="card col-12">
+        <h2>Developer Tests</h2>
+        <div class="content">
+          <details>
+            <summary class="hint">Run internal tests</summary>
+            <button class="btn" id="runTestsBtn">Run tests</button>
+            <div id="testOutput" class="hint" style="margin-top:8px"></div>
+          </details>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -387,7 +389,7 @@
 
     // Panel types
     const PANEL_TYPES = ["CLT","C/GL","Timber Frame"]; // C/GL = Solid/Glulam
-    const FASTENER_TYPES = ["LBA460 nails","LBS560 screws"]; // Timber-side fasteners // Timber-side fasteners
+    const FASTENER_TYPES = ["LBA460 nails","LBS560 screws"]; // Timber-side fasteners
     const PATTERNS = Object.keys(DENSITY);
 
     // ======== DOM helpers ========
@@ -526,7 +528,7 @@
         const hbs = hbsPerRun(L, edge);
 
         tr.querySelector('[data-cell="timber"]').textContent = timber.toLocaleString();
-        tr.querySelector('[data-cell="anchors"]').textContent = (anchors).toLocaleString();
+        tr.querySelector('[data-cell="anchors"]').textContent = anchors.toLocaleString();
 
         totalLen += L;
         totalAnch += anchors;
@@ -703,76 +705,52 @@
       computeAll();
     }
 
-    function exportCSV(){
-      // Build CSV with rows and totals
-      computeAll();
-      const state = serialize();
-      let csv = '';
-      csv += 'Job,'+ (state.meta.job||'') +"
-";
-      csv += `ALUSTART SKU,${state.meta.sku_alustart||''}
-`;
-      csv += `Membrane SKU,${state.meta.sku_membrane||''}
-`;
-      csv += `Nail Gun,${state.meta.nail_gun||''}
-`;
-      csv += `Waste Factor,${state.meta.waste}
-`;
-      csv += `Corners,${state.meta.corners}
-`;
-      csv += `T-Intersections,${state.meta.tees}
-`;
-      csv += '
-';
-      csv += 'Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors
-';
-
-      // We need displayed computed cells, so recompute per row here
+    function buildCSV(state){
+      // Recompute from state to ensure deterministic output
       let totalLen=0, totalTimber=0, totalAnch=0, totalLBA=0, totalLBS=0, totalHBS=0;
+      const lines = [];
+      lines.push(`Job,${state.meta.job||''}`);
+      lines.push(`ALUSTART SKU,${state.meta.sku_alustart||''}`);
+      lines.push(`Membrane SKU,${state.meta.sku_membrane||''}`);
+      lines.push(`Nail Gun,${state.meta.nail_gun||''}`);
+      lines.push(`Waste Factor,${state.meta.waste}`);
+      lines.push(`Corners,${state.meta.corners}`);
+      lines.push(`T-Intersections,${state.meta.tees}`);
+      lines.push('');
+      lines.push('Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors');
+
       state.rows.forEach(r=>{
         const timber = timberPerRun(r.length_ft, r.pattern);
         const anchors = anchorsPerRun(r.length_ft, r.spacing_mm, r.edge_mm);
         const hbs = hbsPerRun(r.length_ft, r.edge_mm);
-        csv += `${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}
-`;
+        lines.push(`${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}`);
         totalLen += r.length_ft; totalTimber += timber; totalAnch += anchors; totalHBS += hbs;
         if (r.fastener==='LBA460 nails') totalLBA += timber; else totalLBS += timber;
       });
+
       const bars = ceil((totalLen/BAR_LENGTH_FT)*(1+state.meta.waste));
       let anchors = totalAnch;
       anchors = Math.min(anchors, bars*ANCHORS_PER_BAR);
 
-      csv += '
-Totals,,,,,,,'+totalTimber+','+anchors+'
-';
-      csv += `Total Length ft,${totalLen}
-`;
-      csv += `Bars,${bars}
-`;
-      csv += `Anchors (final),${anchors}
-`;
-      csv += `HBS880 Screws,${totalHBS}
-`;
-      csv += `Membrane ft,${totalLen.toFixed(1)}
-`;
-      csv += `JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}
-`;
-      csv += `JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}
-`;
-      csv += `LBA460 Nails,${totalLBA}
-`;
-      csv += `LBS560 Screws,${totalLBS}
-`;
+      lines.push(``);
+      lines.push(`Totals,,,,,,,${totalTimber},${anchors}`);
+      lines.push(`Total Length ft,${totalLen}`);
+      lines.push(`Bars,${bars}`);
+      lines.push(`Anchors (final),${anchors}`);
+      lines.push(`HBS880 Screws,${totalHBS}`);
+      lines.push(`Membrane ft,${totalLen.toFixed(1)}`);
+      lines.push(`JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}`);
+      lines.push(`JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}`);
+      lines.push(`LBA460 Nails,${totalLBA}`);
+      lines.push(`LBS560 Screws,${totalLBS}`);
 
       // Order Summary
-      csv += `
-Order Summary
-`;
-      csv += `Product,Code,Quantity
-`;
+      lines.push('');
+      lines.push('Order Summary');
+      lines.push('Product,Code,Quantity');
+      const lbaCode = state.meta.nail_gun==='ATEU0116' ? 'LBA34PLA460' : (state.meta.nail_gun==='HH3522' ? 'LBA25PLA460' : '');
       const barsFinal = bars;
       const anchorsFinal = anchors;
-      const lbaCode = state.meta.nail_gun==='ATEU0116' ? 'LBA34PLA460' : (state.meta.nail_gun==='HH3522' ? 'LBA25PLA460' : '');
       const rowsOS = [
         ['ALUSTART bars', (state.meta.sku_alustart || '') , barsFinal],
         ['Membrane under profile (ft)', (state.meta.sku_membrane || ''), totalLen.toFixed(1)],
@@ -783,9 +761,15 @@ Order Summary
         ['JIGSTARTI', 'JIGSTARTI', ceil(totalLen/JIG_INTERVAL_FT)],
         ['JIGSTARTL', 'JIGSTARTL', (state.meta.corners + 2*state.meta.tees)]
       ];
-      rowsOS.forEach(r=>{ csv += `${r[0]},${r[1]},${r[2]}
-`; });
+      rowsOS.forEach(r=> lines.push(`${r[0]},${r[1]},${r[2]}`));
 
+      return lines.join('\n');
+    }
+
+    function exportCSV(){
+      computeAll();
+      const state = serialize();
+      const csv = buildCSV(state);
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -807,6 +791,7 @@ Order Summary
       btn.addEventListener('click', ()=>{ const now = !document.body.classList.contains('compact'); apply(now); localStorage.setItem(COMPACT_KEY, now? '1':'0'); });
     };
     document.addEventListener('DOMContentLoaded', toggleBtnInit);
+
     // ---- ALUSTART SKU: draggable presets + dropdown/custom combo ----
     const PRESET_SKUS = ['ALUSTART80','ALUSTART100','ALUSTART120','ALUSTART140','ALUSTART160'];
     const strip = document.getElementById('sku_strip');
@@ -828,14 +813,10 @@ Order Summary
         computeAll();
       });
     }
-    $('#addRowBtn').addEventListener('click', ()=> addRow());
-    $('#saveBtn').addEventListener('click', save);
-    $('#loadBtn').addEventListener('click', load);
-    $('#resetBtn').addEventListener('click', resetAll);
-    $('#csvBtn').addEventListener('click', exportCSV);
-    $('#printBtn').addEventListener('click', ()=> window.print());
 
-    $('#job, #sku_alustart, #sku_membrane, #nail_gun, #waste, #corners, #tees').addEventListener('input', computeAll);
+    // General inputs -> recompute
+    ['#job','#sku_alustart','#sku_alustart_select','#sku_membrane','#nail_gun','#waste','#corners','#tees']
+      .forEach(sel=>{ const el = $(sel); if(el){ el.addEventListener('input', computeAll); el.addEventListener('change', computeAll);} });
 
     // Show constants in UI
     $('#bl').textContent = BAR_LENGTH_FT.toFixed(3);
@@ -845,7 +826,31 @@ Order Summary
     // Startup
     addRow({ name: 'Run 1', length_ft: 20, panel: 'CLT', fastener: 'LBA460 nails', pattern: 'TOTAL', spacing_mm: 200, edge_mm: 100 });
     computeAll();
-  </script>
+
+    // ======== Simple Test Suite ========
+    function runTests(){
+      const out = [];
+      const assert = (cond, msg) => { if(!cond){ out.push('❌ '+msg); } else { out.push('✅ '+msg); } };
+      // Anchors at 200mm, 100mm edge each side, 10 ft
+      const a1 = anchorsPerRun(10,200,100); // L=3048mm, usable=2848 => 1 + floor(2848/200)=1+14=15
+      assert(a1===15, `anchorsPerRun basic (got ${a1})`);
+      // HBS at 300mm
+      const h1 = hbsPerRun(10,100); // usable=2848 => 1+floor(2848/300)=1+9=10
+      assert(h1===10, `hbsPerRun basic (got ${h1})`);
+      // Timber density TOTAL 22 pcs/ft
+      const t1 = timberPerRun(3.2,'TOTAL');
+      assert(t1===Math.ceil(3.2*22), `timberPerRun TOTAL (got ${t1})`);
+      // CSV builder smoke tests
+      const sample = { meta:{job:'T1',sku_alustart:'ALUSTART120',sku_membrane:'MBR',nail_gun:'ATEU0116',waste:0.05,corners:2,tees:1},
+        rows:[{name:'Run 1',length_ft:20,panel:'CLT',fastener:'LBA460 nails',pattern:'TOTAL',spacing_mm:200,edge_mm:100}] };
+      const csv = buildCSV(sample);
+      assert(csv.includes('Job,T1'), 'CSV includes Job');
+      assert(csv.includes('ALUSTART SKU,ALUSTART120'), 'CSV includes ALUSTART SKU');
+      assert(csv.includes('HBS880'), 'CSV includes HBS line');
+      $('#testOutput').textContent = out.join('\n');
+    }
+    const testBtn = document.getElementById('runTestsBtn');
+    if (testBtn) testBtn.addEventListener('click', runTests);
   </script>
 </body>
 </html>
