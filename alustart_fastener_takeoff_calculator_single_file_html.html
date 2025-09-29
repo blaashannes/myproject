@@ -129,6 +129,10 @@
     body.compact input[type="number"], body.compact input[type="text"], body.compact select{padding:8px 10px; border-radius:8px; font-size:14px}
     body.compact .run-card .grid{gap:8px}
     @media(min-width:980px){ body.compact .run-card .grid{grid-template-columns:repeat(8, minmax(110px,1fr))} }
+  .sku-strip{display:flex;gap:8px;flex-wrap:wrap}
+    .sku-pill{user-select:none; display:inline-flex; align-items:center; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:#0b162e; font-size:12px; cursor:grab}
+    .sku-pill:active{cursor:grabbing}
+    .drop-target{outline:2px dashed var(--accent); outline-offset:2px}
   </style>
 </head>
 <body>
@@ -169,14 +173,35 @@
           </div>
           <div>
             <label for="sku_alustart">ALUSTART profile SKU</label>
-            <input id="sku_alustart" type="text" placeholder="e.g., ALUSTART120"/>
+            <div class="grid" style="gap:8px">
+              <select id="sku_alustart_select" aria-label="Select ALUSTART SKU">
+                <option value="">— Select SKU —</option>
+                <option>ALUSTART80</option>
+                <option>ALUSTART100</option>
+                <option>ALUSTART120</option>
+                <option>ALUSTART140</option>
+                <option>ALUSTART160</option>
+                <option value="__custom">Other / custom…</option>
+              </select>
+              <!-- Hidden text field that always stores the chosen value for save/export -->
+              <input id="sku_alustart" type="text" placeholder="e.g., ALUSTART120" title="Custom ALUSTART SKU" style="display:none"/>
+              <div class="sku-strip" id="sku_strip" aria-label="Drag a SKU onto the selector or custom box"></div>
+            </div>
           </div>
           <div>
             <label for="sku_membrane">Membrane SKU</label>
             <input id="sku_membrane" type="text" placeholder="e.g., STARTBAND / PROTECT"/>
           </div>
           <div>
-            <label for="waste">Waste factor (bars)</label>
+            <label for="nail_gun">Nail gun (for LBA460)</label>
+            <select id="nail_gun">
+              <option value="">— Select —</option>
+              <option value="ATEU0116">ATEU0116 impact nail gun → LBA34PLA460</option>
+              <option value="HH3522">HH3522 nail gun → LBA25PLA460</option>
+            </select>
+          </div>
+          <div>
+            <label for="waste">Waste factor (bars)</label>>Waste factor (bars)</label>
             <input id="waste" type="number" min="0" step="0.01" value="0.05" />
             <div class="hint">Fraction (e.g., 0.05 = 5%) applied to bar count.</div>
           </div>
@@ -201,7 +226,7 @@
             </div>
             <div class="muted">
               <div><span class="pill">Fasteners</span></div>
-              <div class="hint">Timber side: LBA nails Ø0.16" or LBS screws Ø0.20"</div>
+              <div class="hint">Concrete side: <strong>SKREVO12100</strong>. Timber side: <strong>LBA460</strong> nails or <strong>LBS560</strong> screws. For LBA460: ATEU0116 ⇒ <strong>LBA34PLA460</strong>, HH3522 ⇒ <strong>LBA25PLA460</strong>.</div>
             </div>
           </div>
         </div>
@@ -265,9 +290,9 @@
               <div class="hint">Bar length 7.874 ft</div>
             </div>
             <div class="tile">
-              <div class="lbl">Anchors (to concrete)</div>
+              <div class="lbl">Concrete fasteners (SKREVO12100)</div>
               <div class="big" id="k_anchors">0</div>
-              <div class="hint">Capped by available holes if selected</div>
+              <div class="hint">Capped by available holes</div>
             </div>
             <div class="tile">
               <div class="lbl">Membrane under profile</div>
@@ -276,11 +301,11 @@
           </div>
           <div class="grid cols-4" style="margin-top:12px">
             <div class="tile">
-              <div class="lbl">Timber fasteners (LBA nails)</div>
+              <div class="lbl">Timber fasteners (LBA460 nails)</div>
               <div class="big" id="k_lba">0</div>
             </div>
             <div class="tile">
-              <div class="lbl">Timber fasteners (LBS screws)</div>
+              <div class="lbl">Timber fasteners (LBS560 screws)</div>
               <div class="big" id="k_lbs">0</div>
             </div>
             <div class="tile">
@@ -297,7 +322,7 @@
               <div class="big" id="k_lba">0</div>
             </div>
             <div class="tile">
-              <div class="lbl">Timber fasteners (LBS screws)</div>
+              <div class="lbl">Timber fasteners (LBS560 screws)</div>
               <div class="big" id="k_lbs">0</div>
             </div>
             <div class="tile">
@@ -362,7 +387,7 @@
 
     // Panel types
     const PANEL_TYPES = ["CLT","C/GL","Timber Frame"]; // C/GL = Solid/Glulam
-    const FASTENER_TYPES = ["LBA nails","LBS screws"]; // Timber-side fasteners
+    const FASTENER_TYPES = ["LBA460 nails","LBS560 screws"]; // Timber-side fasteners // Timber-side fasteners
     const PATTERNS = Object.keys(DENSITY);
 
     // ======== DOM helpers ========
@@ -377,7 +402,7 @@
         name: `Run ${i+1}`,
         length_ft: 10,
         panel: "CLT",
-        fastener: "LBA nails",
+        fastener: "LBA460 nails",
         pattern: "TOTAL",
         spacing_mm: 200,
         edge_mm: 100
@@ -508,13 +533,13 @@
         totalHBS += hbs;
         totalTimber += timber;
 
-        if (fastener === 'LBA nails') totalLBA += timber; else totalLBS += timber;
+        if (fastener === 'LBA460 nails') totalLBA += timber; else totalLBS += timber;
 
         // Validation rules
         if (panel === 'C/GL' && pattern === 'TOTAL') {
           warnings.push(`${nameI.value || 'Run'}: Avoid TOTAL pattern for C/GL under shear.`);
         }
-        if (panel === 'C/GL' && fastener === 'LBS screws'){
+        if (panel === 'C/GL' && fastener === 'LBS560 screws'){
           warnings.push(`${nameI.value || 'Run'}: LBS screws specified for CLT; check edge distances for C/GL.`);
         }
       });
@@ -548,6 +573,35 @@
 
       // Validation output
       $('#validation').textContent = warnings.join('  •  ');
+      renderOrder();
+    }
+
+    // Build Order Summary table
+    const orderBody = document.querySelector('#orderBody');
+    function renderOrder(){
+      if (!orderBody) return;
+      // pull displayed KPIs
+      const bars = Number(($('#k_bars')?.textContent||'0').replace(/,/g,''))||0;
+      const anchors = Number(($('#k_anchors')?.textContent||'0').replace(/,/g,''))||0;
+      const hbs = Number(($('#k_hbs')?.textContent||'0').replace(/,/g,''))||0;
+      const lba = Number(($('#k_lba')?.textContent||'0').replace(/,/g,''))||0;
+      const lbs = Number(($('#k_lbs')?.textContent||'0').replace(/,/g,''))||0;
+      const jigi = Number(($('#k_jigi')?.textContent||'0').replace(/,/g,''))||0;
+      const jigl = Number(($('#k_jigl')?.textContent||'0').replace(/,/g,''))||0;
+      const totalLen = parseFloat(($('#k_total_len')?.textContent||'0').replace(/[^0-9.]/g,''))||0;
+      const state = serialize();
+      const lbaCode = state.meta.nail_gun==='ATEU0116' ? 'LBA34PLA460' : (state.meta.nail_gun==='HH3522' ? 'LBA25PLA460' : '');
+      const rows = [
+        {product:'ALUSTART bars', code:state.meta.sku_alustart||'', qty:bars},
+        {product:'Membrane under profile (ft)', code:state.meta.sku_membrane||'', qty:totalLen.toFixed(1)},
+        {product:'Concrete fastener', code:'SKREVO12100', qty:anchors},
+        {product:'HBS screw (Ø0.32")', code:'HBS880', qty:hbs},
+        {product:'Timber fasteners – LBA460 nails', code:lbaCode, qty:lba},
+        {product:'Timber fasteners – LBS560 screws', code:'', qty:lbs},
+        {product:'JIGSTARTI', code:'JIGSTARTI', qty:jigi},
+        {product:'JIGSTARTL', code:'JIGSTARTL', qty:jigl}
+      ];
+      orderBody.innerHTML = rows.map(r=>`<tr><td>${r.product}</td><td contenteditable="true">${r.code||'—'}</td><td class="num">${(r.qty||0).toLocaleString()}</td></tr>`).join('');
     }
 
     // ======== Save/Load/Reset/CSV/Print ========
@@ -570,11 +624,14 @@
           edge_mm: toNumber(edgeI.value)
         };
       });
-      return {
-        meta: {
+      // Resolve current ALUSTART SKU from UI before building payload
+      const selVal = (document.getElementById('sku_alustart_select')||{}).value || '';
+      const skuVal = selVal === '__custom' ? (document.getElementById('sku_alustart')||{}).value : (selVal || (document.getElementById('sku_alustart')||{}).value);
+      return { meta: {
           job: $('#job').value,
-          sku_alustart: $('#sku_alustart').value,
+          sku_alustart: skuVal,
           sku_membrane: $('#sku_membrane').value,
+          nail_gun: $('#nail_gun').value,
           waste: toNumber($('#waste').value),
           corners: toNumber($('#corners').value),
           tees: toNumber($('#tees').value)
@@ -583,11 +640,33 @@
       };
     }
 
+    function setSkuAlustart(value){
+      const sel = document.getElementById('sku_alustart_select');
+      const input = document.getElementById('sku_alustart');
+      if (!sel || !input) return;
+      // Try to match an existing option
+      const match = Array.from(sel.options).find(o=>o.value===value || o.text===value);
+      if (match && match.value !== '__custom' && match.value !== ''){
+        sel.value = match.value || match.text;
+        input.style.display = 'none';
+        input.value = match.value || match.text;
+      } else if (value){
+        sel.value = '__custom';
+        input.style.display = '';
+        input.value = value;
+      } else {
+        sel.value = '';
+        input.style.display = 'none';
+        input.value = '';
+      }
+    }
+
     function deserialize(state){
       if (!state) return;
       $('#job').value = state.meta?.job || '';
-      $('#sku_alustart').value = state.meta?.sku_alustart || '';
+      setSkuAlustart(state.meta?.sku_alustart || '');
       $('#sku_membrane').value = state.meta?.sku_membrane || '';
+      $('#nail_gun').value = state.meta?.nail_gun || '';
       $('#waste').value = state.meta?.waste ?? 0.05;
       $('#corners').value = state.meta?.corners ?? 0;
       $('#tees').value = state.meta?.tees ?? 0;
@@ -613,8 +692,9 @@
     function resetAll(){
       if(!confirm('Clear all inputs?')) return;
       $('#job').value = '';
-      $('#sku_alustart').value = '';
+      setSkuAlustart('');
       $('#sku_membrane').value = '';
+      $('#nail_gun').value = '';
       $('#waste').value = 0.05;
       $('#corners').value = 0;
       $('#tees').value = 0;
@@ -628,14 +708,24 @@
       computeAll();
       const state = serialize();
       let csv = '';
-      csv += 'Job,'+ (state.meta.job||'') +"\n";
-      csv += `ALUSTART SKU,${state.meta.sku_alustart||''}\n`;
-      csv += `Membrane SKU,${state.meta.sku_membrane||''}\n`;
-      csv += `Waste Factor,${state.meta.waste}\n`;
-      csv += `Corners,${state.meta.corners}\n`;
-      csv += `T-Intersections,${state.meta.tees}\n`;
-      csv += '\n';
-      csv += 'Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors\n';
+      csv += 'Job,'+ (state.meta.job||'') +"
+";
+      csv += `ALUSTART SKU,${state.meta.sku_alustart||''}
+`;
+      csv += `Membrane SKU,${state.meta.sku_membrane||''}
+`;
+      csv += `Nail Gun,${state.meta.nail_gun||''}
+`;
+      csv += `Waste Factor,${state.meta.waste}
+`;
+      csv += `Corners,${state.meta.corners}
+`;
+      csv += `T-Intersections,${state.meta.tees}
+`;
+      csv += '
+';
+      csv += 'Run,Length ft,Panel,Fastener,Pattern,Spacing mm,Edge mm,Timber fasteners,Anchors
+';
 
       // We need displayed computed cells, so recompute per row here
       let totalLen=0, totalTimber=0, totalAnch=0, totalLBA=0, totalLBS=0, totalHBS=0;
@@ -643,41 +733,58 @@
         const timber = timberPerRun(r.length_ft, r.pattern);
         const anchors = anchorsPerRun(r.length_ft, r.spacing_mm, r.edge_mm);
         const hbs = hbsPerRun(r.length_ft, r.edge_mm);
-        csv += `${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}\n`;
+        csv += `${r.name},${r.length_ft},${r.panel},${r.fastener},${r.pattern},${r.spacing_mm},${r.edge_mm},${timber},${anchors}
+`;
         totalLen += r.length_ft; totalTimber += timber; totalAnch += anchors; totalHBS += hbs;
-        if (r.fastener==='LBA nails') totalLBA += timber; else totalLBS += timber;
+        if (r.fastener==='LBA460 nails') totalLBA += timber; else totalLBS += timber;
       });
       const bars = ceil((totalLen/BAR_LENGTH_FT)*(1+state.meta.waste));
       let anchors = totalAnch;
       anchors = Math.min(anchors, bars*ANCHORS_PER_BAR);
 
-      csv += '\nTotals,,,,,,,'+totalTimber+','+anchors+'\n';
-      csv += `Total Length ft,${totalLen}\n`;
-      csv += `Bars,${bars}\n`;
-      csv += `Anchors (final),${anchors}\n`;
-      csv += `HBS880 Screws,${totalHBS}\n`;
-      csv += `Membrane ft,${totalLen.toFixed(1)}\n`;
-      csv += `JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}\n`;
-      csv += `JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}\n`;
-      csv += `LBA Nails,${totalLBA}\n`;
-      csv += `LBS Screws,${totalLBS}\n`;
+      csv += '
+Totals,,,,,,,'+totalTimber+','+anchors+'
+';
+      csv += `Total Length ft,${totalLen}
+`;
+      csv += `Bars,${bars}
+`;
+      csv += `Anchors (final),${anchors}
+`;
+      csv += `HBS880 Screws,${totalHBS}
+`;
+      csv += `Membrane ft,${totalLen.toFixed(1)}
+`;
+      csv += `JIGSTARTI,${ceil(totalLen/JIG_INTERVAL_FT)}
+`;
+      csv += `JIGSTARTL,${(state.meta.corners + 2*state.meta.tees)}
+`;
+      csv += `LBA460 Nails,${totalLBA}
+`;
+      csv += `LBS560 Screws,${totalLBS}
+`;
 
       // Order Summary
-      csv += `\nOrder Summary\n`;
-      csv += `Product,Code,Quantity\n`;
+      csv += `
+Order Summary
+`;
+      csv += `Product,Code,Quantity
+`;
       const barsFinal = bars;
       const anchorsFinal = anchors;
+      const lbaCode = state.meta.nail_gun==='ATEU0116' ? 'LBA34PLA460' : (state.meta.nail_gun==='HH3522' ? 'LBA25PLA460' : '');
       const rowsOS = [
         ['ALUSTART bars', (state.meta.sku_alustart || '') , barsFinal],
         ['Membrane under profile (ft)', (state.meta.sku_membrane || ''), totalLen.toFixed(1)],
-        ['Anchors to concrete', '', anchorsFinal],
+        ['Concrete fastener', 'SKREVO12100', anchorsFinal],
         ['HBS screw (Ø0.32\")', 'HBS880', totalHBS],
-        ['Timber fasteners – LBA nails', '', totalLBA],
-        ['Timber fasteners – LBS screws', '', totalLBS],
+        ['Timber fasteners – LBA460 nails', lbaCode, totalLBA],
+        ['Timber fasteners – LBS560 screws', '', totalLBS],
         ['JIGSTARTI', 'JIGSTARTI', ceil(totalLen/JIG_INTERVAL_FT)],
         ['JIGSTARTL', 'JIGSTARTL', (state.meta.corners + 2*state.meta.tees)]
       ];
-      rowsOS.forEach(r=>{ csv += `${r[0]},${r[1]},${r[2]}\n`; });
+      rowsOS.forEach(r=>{ csv += `${r[0]},${r[1]},${r[2]}
+`; });
 
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
       const url = URL.createObjectURL(blob);
@@ -700,6 +807,27 @@
       btn.addEventListener('click', ()=>{ const now = !document.body.classList.contains('compact'); apply(now); localStorage.setItem(COMPACT_KEY, now? '1':'0'); });
     };
     document.addEventListener('DOMContentLoaded', toggleBtnInit);
+    // ---- ALUSTART SKU: draggable presets + dropdown/custom combo ----
+    const PRESET_SKUS = ['ALUSTART80','ALUSTART100','ALUSTART120','ALUSTART140','ALUSTART160'];
+    const strip = document.getElementById('sku_strip');
+    if (strip){ strip.innerHTML = PRESET_SKUS.map(s=>`<span class="sku-pill" draggable="true" data-sku="${s}">${s}</span>`).join('');
+      strip.addEventListener('dragstart', e=>{ const t = e.target.closest('.sku-pill'); if(!t) return; e.dataTransfer.setData('text/plain', t.dataset.sku); });
+    }
+    const skuSelect = document.getElementById('sku_alustart_select');
+    const skuInput = document.getElementById('sku_alustart');
+    if (skuSelect && skuInput){
+      [skuSelect, skuInput].forEach(el=>{
+        el.addEventListener('dragover', e=>{ e.preventDefault(); el.classList.add('drop-target'); });
+        el.addEventListener('dragleave', ()=> el.classList.remove('drop-target'));
+        el.addEventListener('drop', e=>{ e.preventDefault(); el.classList.remove('drop-target'); const val = e.dataTransfer.getData('text/plain'); setSkuAlustart(val); computeAll(); });
+      });
+      skuSelect.addEventListener('change', ()=>{
+        if (skuSelect.value === '__custom') { skuInput.style.display=''; if(!skuInput.value) skuInput.focus(); }
+        else { skuInput.style.display='none'; skuInput.value=''; }
+        if (skuSelect.value && skuSelect.value !== '__custom') skuInput.value = skuSelect.value; // keep hidden storage in sync
+        computeAll();
+      });
+    }
     $('#addRowBtn').addEventListener('click', ()=> addRow());
     $('#saveBtn').addEventListener('click', save);
     $('#loadBtn').addEventListener('click', load);
@@ -707,7 +835,7 @@
     $('#csvBtn').addEventListener('click', exportCSV);
     $('#printBtn').addEventListener('click', ()=> window.print());
 
-    $('#job, #sku_alustart, #sku_membrane, #waste, #corners, #tees').addEventListener('input', computeAll);
+    $('#job, #sku_alustart, #sku_membrane, #nail_gun, #waste, #corners, #tees').addEventListener('input', computeAll);
 
     // Show constants in UI
     $('#bl').textContent = BAR_LENGTH_FT.toFixed(3);
@@ -715,10 +843,9 @@
     $('#ji').textContent = JIG_INTERVAL_FT.toFixed(3);
 
     // Startup
-    addRow({ name: 'Run 1', length_ft: 20, panel: 'CLT', fastener: 'LBA nails', pattern: 'TOTAL', spacing_mm: 200, edge_mm: 100 });
+    addRow({ name: 'Run 1', length_ft: 20, panel: 'CLT', fastener: 'LBA460 nails', pattern: 'TOTAL', spacing_mm: 200, edge_mm: 100 });
     computeAll();
-  </script> edge_mm: 100 });
-    computeAll();
+  </script>
   </script>
 </body>
 </html>
